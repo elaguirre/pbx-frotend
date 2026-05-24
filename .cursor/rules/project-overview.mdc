@@ -1,0 +1,47 @@
+---
+description: Contexto general del panel admin PBX (React)
+alwaysApply: true
+---
+
+# PBX Admin — visión general
+
+Panel de administración multi-tenant. Stack: **React 19**, **Vite**, **React Router 7**, **Tailwind CSS 3**, **Zustand**, **axios**, **pnpm**, **Tabler Icons** (`@tabler/icons-react`).
+
+## Alcance de estas reglas
+
+Solo código de este repositorio (`pbx-front`). No documentar Laravel, migraciones ni seeders aquí. La integración con el servidor es vía HTTP (variables `VITE_*`, JSON, headers).
+
+## Principios
+
+- La **consistencia en la experiencia del usuario es CRUCIAL**; ver `engineering-principles.mdc`.
+- **Clean code** y **SOLID** en componentes, hooks y servicios.
+- No modificar archivos ajenos a la tarea actual salvo petición explícita.
+- Revisar componentes y helpers existentes antes de crear duplicados.
+- **Sin Mantine**; UI propia en `src/features/ui`.
+- Textos de interfaz en **español** (i18n en `src/resources/i18n` cuando aplique).
+
+## Dependencias
+
+- Instalar y gestionar paquetes siempre con **pnpm** (`pnpm add`, `pnpm install`, `pnpm remove`, etc.). No usar `npm` ni `npx`.
+- Íconos: `@tabler/icons-react` + componente `Icon` en `@features/ui`. Ver regla `icons.mdc`.
+
+## Estructura
+
+| Alias | Ruta |
+|-------|------|
+| `@features` | `src/features` — UI, layouts, router |
+| `@pages` | `src/pages` — pantallas |
+| `@resources` | `src/resources` — services, contexts, hooks, helpers |
+
+## Variables de entorno
+
+- `VITE_APP_API_URL` — base del API admin (ej. termina en `/api/admin`).
+- `VITE_APP_TENANT` — id del tenant enviado en cada petición.
+
+## Permisos en UI
+
+Usar `userCan('recurso.view')`, `userCan('recurso.add')`, etc. de `AuthContext`. Entradas de menú en `src/resources/menu.jsx` con `permission` (normalmente `[recurso].view`).
+
+## Ver detalle
+
+Página dedicada (`Detail.jsx` + ruta en `PrivateRoutes`), no modal. Modales solo para altas/edición. Ver regla `nested-detail-views.mdc`.

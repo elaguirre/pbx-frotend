@@ -1,0 +1,116 @@
+{
+  "hash": "110cb369",
+  "configHash": "6100d3a7",
+  "lockfileHash": "8c7eb8a8",
+  "browserHash": "7cacbef1",
+  "optimized": {
+    "@tabler/icons-react": {
+      "src": "../../node_modules/.pnpm/@tabler+icons-react@3.44.0_react@19.2.6/node_modules/@tabler/icons-react/dist/esm/tabler-icons-react.mjs",
+      "file": "@tabler_icons-react.js",
+      "fileHash": "1ddd0ce0",
+      "needsInterop": false
+    },
+    "@uidotdev/usehooks": {
+      "src": "../../node_modules/.pnpm/@uidotdev+usehooks@2.4.1_re_ebe27d8dfcd8270fb8434a15f3ac677e/node_modules/@uidotdev/usehooks/index.js",
+      "file": "@uidotdev_usehooks.js",
+      "fileHash": "ea899456",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/.pnpm/axios@1.16.1/node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "154d5439",
+      "needsInterop": false
+    },
+    "classnames": {
+      "src": "../../node_modules/.pnpm/classnames@2.5.1/node_modules/classnames/index.js",
+      "file": "classnames.js",
+      "fileHash": "b264a463",
+      "needsInterop": true
+    },
+    "dayjs": {
+      "src": "../../node_modules/.pnpm/dayjs@1.11.20/node_modules/dayjs/dayjs.min.js",
+      "file": "dayjs.js",
+      "fileHash": "2dda44de",
+      "needsInterop": true
+    },
+    "dayjs/locale/es": {
+      "src": "../../node_modules/.pnpm/dayjs@1.11.20/node_modules/dayjs/locale/es.js",
+      "file": "dayjs_locale_es.js",
+      "fileHash": "521ca8a0",
+      "needsInterop": true
+    },
+    "i18next": {
+      "src": "../../node_modules/.pnpm/i18next@26.2.0/node_modules/i18next/dist/esm/i18next.js",
+      "file": "i18next.js",
+      "fileHash": "ac985ce7",
+      "needsInterop": false
+    },
+    "js-cookie": {
+      "src": "../../node_modules/.pnpm/js-cookie@3.0.7/node_modules/js-cookie/dist/js.cookie.mjs",
+      "file": "js-cookie.js",
+      "fileHash": "0d12ea35",
+      "needsInterop": false
+    },
+    "react-dom": {
+      "src": "../../node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "2c840056",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/.pnpm/react-dom@19.2.6_react@19.2.6/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "86de6791",
+      "needsInterop": true
+    },
+    "react-i18next": {
+      "src": "../../node_modules/.pnpm/react-i18next@17.0.8_i18nex_62b146a4806cef18bf2b6febf9b17788/node_modules/react-i18next/dist/es/index.js",
+      "file": "react-i18next.js",
+      "fileHash": "793a86a2",
+      "needsInterop": false
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/.pnpm/react-router-dom@7.15.1_rea_872a4ce6f3a66b3a0f684ac4b13c3b29/node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "38fd2ec0",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/.pnpm/react@19.2.6/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "748c2775",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/.pnpm/react@19.2.6/node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "bae41251",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../node_modules/.pnpm/react@19.2.6/node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "2e0452d7",
+      "needsInterop": true
+    },
+    "zustand": {
+      "src": "../../node_modules/.pnpm/zustand@5.0.13_@types+react_0095287b724cb1f8d84d581237ef6a83/node_modules/zustand/esm/index.mjs",
+      "file": "zustand.js",
+      "fileHash": "b3ea673c",
+      "needsInterop": false
+    },
+    "zustand/middleware": {
+      "src": "../../node_modules/.pnpm/zustand@5.0.13_@types+react_0095287b724cb1f8d84d581237ef6a83/node_modules/zustand/esm/middleware.mjs",
+      "file": "zustand_middleware.js",
+      "fileHash": "1eb51d08",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-CYJPkc-J": {
+      "file": "chunk-CYJPkc-J.js",
+      "isDynamicEntry": false
+    }
+  }
+}

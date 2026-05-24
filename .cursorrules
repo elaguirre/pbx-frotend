@@ -1,0 +1,36 @@
+# Cursor Rules for PBX Front
+
+## General
+- La **consistencia en la experiencia del usuario es CRUCIAL**; ver `.cursor/rules/engineering-principles.mdc`.
+- Apegarse a **clean code** y **SOLID**.
+- Do NOT modify files unrelated to the current task unless explicitly requested.
+- Reuse existing helpers and UI components before creating new ones.
+- Follow the existing project structure and naming conventions.
+
+## Dependencies
+- Always use **pnpm** to install or manage packages (`pnpm add`, `pnpm install`, `pnpm remove`, etc.). Do not use `npm` or `npx` for dependency installation.
+- Icons: **@tabler/icons-react** via the `Icon` wrapper in `src/features/ui/Icon`.
+
+## Components
+- Prefer functional components with hooks.
+- Use custom UI primitives from `src/features/ui` (no Mantine).
+- Use `InputWrapper` for consistent form field layout.
+
+## Styling
+- Use Tailwind CSS utility classes.
+
+## State Management
+- Use React Context for global state.
+- Use Zustand (`useAppStore`) for auth state.
+
+## File Structure
+- `src/features`: Feature-specific code (components, UI, Router, layouts).
+- `src/resources`: Shared services, contexts, hooks, constants.
+- `src/pages`: Page components.
+
+## Ver detalle
+- Usar página propia (`Detail.jsx`, ruta `/{recurso}/:id`, `AppModule`, secciones con tabla). No abrir fichas de consulta en modal.
+- Modales (`*FormModal.jsx`) solo para crear/editar. Ver `.cursor/rules/nested-detail-views.mdc`.
+
+## Modales de alta/edición
+- Tras `store`/`update` exitoso: `onSave?.(response?.data ?? response)` antes de `onClose`. Ver `.cursor/rules/forms-modals.mdc`.

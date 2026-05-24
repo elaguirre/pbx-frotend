@@ -1,0 +1,45 @@
+---
+description: Servicios HTTP, axios y datatable
+globs: src/resources/services/**/*.{js,jsx},src/resources/hooks/**/*.{js,jsx},src/resources/helpers/setupAxios.js
+alwaysApply: false
+---
+
+# Servicios y datos
+
+## Servicio CRUD
+
+```js
+const urlBase = 'items';
+
+export const itemService = {
+    getAll(params = {}) {
+        return axios.get(urlBase, { params: { paginated: true, ...params } }).then((res) => res.data);
+    },
+    store(values) {
+        return axios.post(urlBase, values).then((res) => res.data);
+    },
+    update(id, values) {
+        return axios.put(`${urlBase}/${id}`, values).then((res) => res.data);
+    },
+    destroy(id) {
+        return axios.delete(`${urlBase}/${id}`).then((res) => res.data);
+    },
+};
+```
+
+- Rutas relativas a `VITE_APP_API_URL` (axios ya configurado en `setupAxios.js`).
+- Listados paginados: siempre `paginated: true` en `getAll` salvo excepción documentada.
+
+## useDatatable
+
+- Recibe `service` con `getAll`; expone `data`, `controls`, `loading`, `updateList`.
+- `data` paginado tiene forma `{ data: [], ...meta }` compatible con `Table` y `Pagination`.
+
+## Errores
+
+- 422: usar `parseApiErrors(error)` en formularios para mapear `errors` al estado local.
+- Toasts globales los maneja el interceptor de axios; no duplicar notificaciones en cada catch salvo casos especiales.
+
+## Exportar
+
+Añadir el servicio en `src/resources/services/index.js`.

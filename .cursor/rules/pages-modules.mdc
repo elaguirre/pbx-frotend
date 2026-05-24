@@ -1,0 +1,40 @@
+---
+description: Páginas, módulos y tabla de listado
+globs: src/pages/**/*.{jsx,js},src/resources/menu.jsx
+alwaysApply: false
+---
+
+# Páginas y listados
+
+## Módulo típico
+
+```jsx
+export function Items() {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
+    const { data, controls, loading, updateList } = useDatatable({ service: itemService });
+
+    return (
+        <AppModule title="Items" description="...">
+            <Table
+                controls={controls}
+                columns={columns}
+                data={data}
+                loading={loading}
+                headerRight={userCan('items.add') && <Button onClick={() => openModal()}>+ Nuevo</Button>}
+            />
+        </AppModule>
+    );
+}
+```
+
+## Tabla
+
+- Columnas: `{ title, column, isSortable?, align? }`; `column` puede ser string o render `(row) => ...`.
+- Acciones por fila con `TableActionsDropdown` y permisos `items.edit`, `items.delete`, etc.
+- Exportar página desde `src/pages/index.js` y registrar ruta en `menu.jsx`.
+
+## Convenciones
+
+- Componentes de página en PascalCase; carpeta por recurso (`Items/index.jsx`, `Items/FormModal.jsx`).
+- Slug u otros campos calculados en servidor: mostrar solo lectura si vienen en el row, no enviarlos en el payload de guardado.

@@ -1,0 +1,17 @@
+---
+description: Principios de UX, clean code y SOLID
+alwaysApply: true
+---
+
+# Principios de ingeniería
+
+## Experiencia de usuario
+
+- La **consistencia en la experiencia del usuario es CRUCIAL**: mismos patrones de listado, detalle, modales, permisos, badges, tabs y acciones que el resto del panel.
+- Antes de inventar un componente o flujo, revisar un módulo de referencia similar (p. ej. `Carriers/Detail.jsx`, `Orders/Detail.jsx`).
+- Textos, estados vacíos y mensajes de error en **español**, alineados con el tono existente.
+
+## Código
+
+- Apegarse a **clean code** y **SOLID**: responsabilidades claras, componentes y servicios pequeños, reutilizar helpers y UI existentes.
+- Cambios mínimos y enfocados en la tarea; no refactorizar módulos ajenos.

@@ -1,0 +1,52 @@
+---
+description: Vistas de detalle con tablas de registros hijos (producto → piezas → materiales)
+globs: src/pages/**/Detail.jsx, src/pages/**/*FormModal.jsx
+alwaysApply: false
+---
+
+# Vistas de detalle anidadas
+
+Patrón recurrente: listado principal → **Ver detalle** → ficha del padre + datatable de hijos con CRUD en modal.
+
+## Ver detalle: página, no modal
+
+- **No** abrir el detalle de un registro en `showModal` / `Modal` grande.
+- **Sí** usar una **ruta propia** (`/{recurso}/:id`), componente en `src/pages/.../Detail.jsx`, `AppModule`, cabecera en `<dl>` y secciones con `<h2>` + `Table`.
+- El botón **Ver** (`Table` con `onRowView` o `tableActionsColumn`) debe hacer `navigate(\`/{recurso}/${row.id}\`)`.
+- Registrar la ruta en `PrivateRoutes.jsx` con el permiso `{recurso}.view`.
+- Toolbar con **Volver a …** hacia el listado o el padre (p. ej. orden de producción).
+- Los **modales** quedan solo para **crear/editar** hijos o formularios cortos (`*FormModal.jsx`), no para la ficha de consulta.
+
+## Referencia
+
+- Pedido: `Orders/Detail.jsx` (conceptos embebidos, tabla sin paginación).
+- Producto: `Products/Detail.jsx` + `ProductPieceFormModal.jsx` (piezas vía `product_pieces`, filtro `product_id`).
+- Pieza: `Pieces/Detail.jsx` + `PieceMaterialFormModal.jsx` (materiales vía `piece_materials`, filtro `piece_id`; **Ver detalle** → `/materials/:id`).
+- Material: `Materials/Detail.jsx` + `MaterialSupplierFormModal.jsx` (proveedores vía `material_suppliers`, include `latestPrice`; **Ver detalle** → `/material-suppliers/:id`).
+- Proveedor: `Suppliers/Detail.jsx` (materiales del proveedor, precio vigente; **Ver detalle** → `/material-suppliers/:id`).
+- Material-proveedor: `MaterialSuppliers/Detail.jsx` + `MaterialSupplierPriceFormModal.jsx` (historial `material_supplier_prices`).
+- Orden de producción → pieza asignada: `ProductionOrders/Detail.jsx` (**Ver** → `/manufacturer-order-pieces/:id`) + `ManufacturerOrderPieceDetail.jsx` (sección **Avance de manufactura** + `ManufacturerOrderPieceProgressFormModal.jsx`).
+
+## Listado principal
+
+- Acción **Ver detalle** con `IconEye` y `navigate(\`/{recurso}/${row.id}\`)`.
+- Ruta en `PrivateRoutes.jsx`: `{recurso}/:id`, permiso `{recurso}.view` (plural en URL: `products`, `pieces`).
+
+## Página de detalle
+
+1. `useParams().id` + `service.get(id)` para cabecera (campos en `<dl>` como pedidos).
+2. `useDatatable` con servicio del hijo y `serviceParams: { include: '...', {parent}_id: id }`.
+3. Tabla con `controls`, paginación y botón **+ Nuevo …** según permiso `{hijo}.add`.
+4. Toolbar: **Volver a {listado}**.
+5. En filas hijas, **Ver detalle** si existe nivel inferior (p. ej. pieza desde producto).
+
+## Modales de asignación
+
+- Reciben `{parent}Id` fijo; no enviar el id del padre editable en edición salvo que el API lo exija.
+- Select de catálogo del hijo (`pieceService`, `materialService`) con `getAll({ paginated: false, limit: 500 })`.
+- Permisos: pivotes `product_pieces.*`, `piece_materials.*`, `material_suppliers.*`; historial `material_supplier_prices.*`; catálogo `pieces.*`, `materials.*`, `suppliers.*`.
+- Proveedores (`suppliers`) usan `entity_id` como clientes; sección propia en menú.
+
+## Servicios hijos
+
+URLs kebab-case: `product-pieces`, `piece-materials`, `material-suppliers`, `material-supplier-prices`.

@@ -1,0 +1,46 @@
+---
+description: Íconos con Tabler Icons en el panel admin
+globs: src/**/*.{jsx,js}
+---
+
+# Íconos (Tabler)
+
+## Paquete
+
+- **`@tabler/icons-react`** — importar solo los íconos que uses (tree-shaking).
+- Instalar siempre con **pnpm**: `pnpm add @tabler/icons-react`.
+
+## Uso recomendado
+
+Preferir el wrapper `Icon` de `@features/ui` para tamaño y stroke consistentes:
+
+```jsx
+import { IconShoppingCart } from '@tabler/icons-react';
+import { Icon } from '@features/ui';
+
+<Icon icon={IconShoppingCart} size="md" />
+```
+
+Tamaños: `sm` (16px), `md` (20px), `lg` (24px) o número en píxeles.
+
+## Accesibilidad
+
+- Íconos decorativos: dejar `aria-hidden` (por defecto en `Icon`).
+- Íconos con significado (solo ícono, sin texto): `aria-label` en el botón/enlace padre, no en el SVG.
+
+## Botones
+
+`Button` acepta `icon` (componente Tabler) e `iconPosition` (`left` | `right`, default `left`):
+
+```jsx
+import { IconPlus } from '@tabler/icons-react';
+import { Button } from '@features/ui';
+
+<Button icon={IconPlus}>Nuevo producto</Button>
+```
+
+## No hacer
+
+- No usar `npm` / `npx` para instalar paquetes.
+- No importar todo el paquete; usar imports nombrados (`IconPlus`, `IconTrash`, etc.).
+- No duplicar SVGs inline si existe el ícono en Tabler.

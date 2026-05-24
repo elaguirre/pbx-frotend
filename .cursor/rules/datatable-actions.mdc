@@ -1,0 +1,42 @@
+---
+description: Acciones por fila en tablas y permisos en UI
+globs: src/pages/**/*.{jsx,js},src/features/ui/TableActionsDropdown.jsx
+alwaysApply: false
+---
+
+# Tablas y acciones
+
+## Dropdown por fila
+
+Usar `TableActionsDropdown` en la columna **Acciones** (no botones sueltos en fila):
+
+```jsx
+import { IconPencil, IconTrash } from '@tabler/icons-react';
+
+<TableActionsDropdown
+    actions={[
+        { label: 'Editar', icon: IconPencil, show: userCan('products.edit'), onClick: () => openModal(row) },
+        { label: 'Eliminar', icon: IconTrash, show: userCan('products.delete'), danger: true, onClick: () => handleDelete(row) },
+    ]}
+/>
+```
+
+- `show: false` oculta la opción; si no quedan acciones, el dropdown no se renderiza.
+- `danger: true` estiliza la opción en rojo.
+
+## Permisos en UI
+
+Convención alineada al API: `[recurso].view | .add | .edit | .delete` y acciones extra (ej. `users.permissions`).
+
+| UI | Permiso |
+|----|---------|
+| Ver módulo / listado | `[recurso].view` |
+| Botón crear | `[recurso].add` |
+| Editar en dropdown | `[recurso].edit` |
+| Eliminar en dropdown | `[recurso].delete` |
+| Permisos de usuario | `users.permissions` |
+
+## Modales de permisos
+
+- `PermissionsModal` carga catálogo (`abilityService`) y asignación del usuario (`adminService.getAbilities` / `updateAbilities`).
+- Solo usuarios con `users.permissions` pueden guardar.

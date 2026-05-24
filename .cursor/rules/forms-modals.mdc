@@ -1,0 +1,54 @@
+---
+description: Formularios, modales y componentes UI
+globs: src/pages/**/*FormModal*.jsx,src/features/ui/**/*
+alwaysApply: false
+---
+
+# Formularios y UI
+
+## Modales
+
+- Abrir con `showModal(<FormModal />, { formValues, onSave: updateList })` desde `GlobalModalsContext`.
+- `FormModal` recibe `onClose`, `formValues`, `onSave` además de props del `Modal`.
+- **No** usar modales para **Ver detalle** de un registro; eso va en una página (`Detail.jsx`). Ver `nested-detail-views.mdc`.
+
+## `onSave` tras crear o editar (obligatorio)
+
+En modales que persisten un registro en la base de datos (`store` / `update` vía servicio), **siempre** pasar el registro devuelto por el API a `onSave`. No llamar `onSave()` sin argumentos.
+
+```jsx
+const response = isEdit
+    ? await someService.update(id, payload)
+    : await someService.store(payload);
+
+onSave?.(response?.data ?? response);
+onClose?.();
+```
+
+- El API admin responde con envelope `{ message, data: modelo }`; `response` es `res.data` de axios, por eso `response?.data ?? response`.
+- Quien abre el modal puede ignorar el argumento (`onSave: updateList`) o usarlo (`SelectPlus`, `applySelectPlusRecord`, navegar al detalle, etc.).
+- **No** crear helpers compartidos solo para esto; el patrón va **inline** en cada modal.
+- Modales que no guardan en BD (confirmaciones, pasos sin persistencia) quedan fuera de esta regla.
+
+## Formulario
+
+- Estado local con `useState`; validación mínima en cliente (campos requeridos).
+- Payload solo con campos editables; omitir ids/slugs generados por el servidor.
+- Usar `Input`, `Textarea`, `Select`, `SelectPlus`, `SaveButton` de `@features/ui`; errores por campo vía prop `error`.
+- `InputWrapper` envuelve labels/errores; no pasar props no soportadas al DOM.
+
+## SelectPlus
+
+- Select + botón **+** para abrir el modal de alta del recurso relacionado.
+- El modal de alta debe cumplir la regla de `onSave(registro)` arriba.
+- Tras crear, el consumidor usa `applySelectPlusRecord` para añadir la opción y seleccionarla.
+
+## Estilos
+
+- Tailwind utility classes; layout coherente con `AppModule`, bordes `slate-200`, botones `Button`.
+- Usar elementos HTML estándar (`div`, `form`, `button`).
+
+## JSX
+
+- Componentes funcionales con hooks.
+- Nombres: componentes PascalCase, funciones/variables camelCase, constantes UPPER_SNAKE_CASE.
