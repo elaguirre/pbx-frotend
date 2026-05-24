@@ -4,19 +4,19 @@ export const MANUFACTURER_ORDER_PIECE_STATUSES = [
     {
         value: 'pending',
         label: 'Pendiente',
-        style: 'bg-amber-50 text-amber-700',
+        style: 'warning',
         icon: IconClock,
     },
     {
         value: 'in_production',
         label: 'En fabricación',
-        style: 'bg-blue-50 text-blue-700',
+        style: 'primary',
         icon: IconTool,
     },
     {
         value: 'completed',
         label: 'Completado',
-        style: 'bg-green-50 text-green-700',
+        style: 'success',
         icon: IconCircleCheck,
     },
 ];
@@ -40,7 +40,7 @@ export function getManufacturerOrderPieceStatusBadgeProps(status) {
 
     return {
         text: config?.label ?? (status != null ? String(status) : '—'),
-        style: config?.style ?? 'bg-slate-100 text-slate-600',
+        style: config?.style ?? 'slate',
         icon: config?.icon ?? null,
     };
 }
@@ -48,6 +48,11 @@ export function getManufacturerOrderPieceStatusBadgeProps(status) {
 /** @deprecated Usar getManufacturerOrderPieceStatusBadgeProps con Badge */
 export function getManufacturerOrderPieceStatusBadgeClassName(status) {
     const { style } = getManufacturerOrderPieceStatusBadgeProps(status);
+    const name = style === 'slate' || !style ? 'slate' : style;
 
-    return `inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${style}`;
+    if (name === 'slate') {
+        return 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-slate-50 text-slate-700';
+    }
+
+    return `inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-${name}-50 text-${name}-700`;
 }

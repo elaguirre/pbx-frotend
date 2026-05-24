@@ -153,9 +153,7 @@ export function ShipmentDetail() {
         {
             title: 'Estado',
             column: (row) => {
-                const badge = getShipmentOrderPieceStatusBadgeProps(row.status);
-
-                return <Badge style={badge.style} text={badge.text} />;
+                return <Badge {...getShipmentOrderPieceStatusBadgeProps(row.status)} />;
             },
         },
         tableActionsColumn({
@@ -197,9 +195,7 @@ export function ShipmentDetail() {
         {
             title: 'Estado',
             column: (row) => {
-                const badge = getShipmentRouteStatusBadgeProps(row.status);
-
-                return <Badge style={badge.style} text={badge.text} />;
+                return <Badge {...getShipmentRouteStatusBadgeProps(row.status)} />;
             },
         },
         tableActionsColumn({

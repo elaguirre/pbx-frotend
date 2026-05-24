@@ -10,7 +10,7 @@ export const MANUFACTURING_FOLLOW_UP_RESULTS = [
     {
         value: 'completed_pieces',
         label: 'Piezas completadas',
-        style: 'bg-green-50 text-green-700',
+        style: 'success',
         icon: IconCircleCheck,
         requiresQuantity: true,
         requiresDetails: false,
@@ -18,7 +18,7 @@ export const MANUFACTURING_FOLLOW_UP_RESULTS = [
     {
         value: 'canceled_pieces',
         label: 'Piezas canceladas',
-        style: 'bg-red-50 text-red-700',
+        style: 'danger',
         icon: IconCircleX,
         requiresQuantity: true,
         requiresDetails: false,
@@ -26,7 +26,7 @@ export const MANUFACTURING_FOLLOW_UP_RESULTS = [
     {
         value: 'blocking',
         label: 'Bloqueo',
-        style: 'bg-red-100 text-red-800',
+        style: 'danger',
         icon: IconBan,
         requiresQuantity: false,
         requiresDetails: true,
@@ -34,7 +34,7 @@ export const MANUFACTURING_FOLLOW_UP_RESULTS = [
     {
         value: 'warning',
         label: 'Advertencia',
-        style: 'bg-amber-50 text-amber-700',
+        style: 'warning',
         icon: IconAlertTriangle,
         requiresQuantity: false,
         requiresDetails: true,
@@ -42,7 +42,7 @@ export const MANUFACTURING_FOLLOW_UP_RESULTS = [
     {
         value: 'info',
         label: 'Informativo',
-        style: 'bg-blue-50 text-blue-700',
+        style: 'info',
         icon: IconInfoCircle,
         requiresQuantity: false,
         requiresDetails: true,
@@ -64,7 +64,7 @@ export function getManufacturingFollowUpResultBadgeProps(result) {
 
     return {
         text: config?.label ?? (result != null ? String(result) : '—'),
-        style: config?.style ?? 'bg-slate-100 text-slate-600',
+        style: config?.style ?? 'slate',
         icon: config?.icon ?? null,
     };
 }

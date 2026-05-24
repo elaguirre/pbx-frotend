@@ -19,11 +19,11 @@ export function getShipmentOrderPieceStatusBadgeProps(value) {
 
     switch (statusValue) {
         case 'delivered':
-            return { style: 'bg-emerald-100 text-emerald-800', text: 'Entregado' };
+            return { style: 'success', text: 'Entregado' };
         case 'returned':
-            return { style: 'bg-amber-100 text-amber-800', text: 'Devuelto' };
+            return { style: 'warning', text: 'Devuelto' };
         case 'pending':
         default:
-            return { style: 'bg-slate-100 text-slate-700', text: 'Pendiente' };
+            return { style: 'slate', text: 'Pendiente' };
     }
 }

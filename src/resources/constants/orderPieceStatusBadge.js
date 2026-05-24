@@ -1,5 +1,3 @@
-const DEFAULT_STYLE = 'bg-slate-100 text-slate-700';
-
 export function getOrderPieceStatusBadgeProps(status) {
     const name =
         typeof status === 'string'
@@ -8,7 +6,7 @@ export function getOrderPieceStatusBadgeProps(status) {
 
     return {
         text: name?.trim() || '—',
-        style: status?.badge_style ?? status?.badgeStyle ?? DEFAULT_STYLE,
+        style: status?.badge_style ?? status?.badgeStyle ?? 'slate',
         icon: status?.icon ?? null,
     };
 }
