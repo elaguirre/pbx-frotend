@@ -10,7 +10,10 @@ import { Icon } from './Icon';
  */
 export function Badge({ style = 'slate', text, icon, className }) {
     return (
-        <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium bg-${style}-50 text-${style}-700 ${className}`}>
+        <span
+            className={
+                `inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium bg-${style}-50 text-${style}-700 ${className} border border-${style}-700 border-opacity-30`
+            }>
             {icon && <Icon icon={icon} size="sm" className="text-current" />}
             {text}
         </span>
