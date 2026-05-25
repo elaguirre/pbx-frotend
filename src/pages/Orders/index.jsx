@@ -1,19 +1,30 @@
 import { useNavigate } from 'react-router-dom';
-import { AppModule, Badge, Table, tableActionsColumn } from '@features/ui';
-import { useAuth } from '@resources/contexts';
+import { AppModule, Badge, Button, Table, tableActionsColumn } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import { getOrderStatusBadgeProps } from '@resources/constants/orders';
 import { formatDate } from '@resources/helpers';
 import { useDatatable } from '@resources/hooks';
 import { getMenuIconByLink } from '@resources/menu';
 import { orderService } from '@resources/services';
+import { StartOrderModal } from './StartOrderModal';
 
 export function Orders() {
     const { userCan } = useAuth();
     const navigate = useNavigate();
-    const { data, controls, loading } = useDatatable({
+    const { showModal } = useGlobalModals();
+    const { data, controls, loading, updateList } = useDatatable({
         service: orderService,
         serviceParams: { include: 'client.entity,user' },
     });
+
+    function openStartOrderModal() {
+        showModal(<StartOrderModal />, {
+            onSave: () => {
+                updateList();
+                navigate('/products');
+            },
+        });
+    }
 
     const columns = [
         { title: 'ID', column: 'id', isSortable: true },
@@ -48,6 +59,13 @@ export function Orders() {
                 loading={loading}
                 onRowView={(row) => navigate(`/orders/${row.id}`)}
                 showRowView={userCan('orders.view')}
+                headerRight={
+                    userCan('orders.add') && (
+                        <Button type="button" onClick={openStartOrderModal}>
+                            + Nuevo pedido
+                        </Button>
+                    )
+                }
             />
         </AppModule>
     );

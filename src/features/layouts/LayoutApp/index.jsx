@@ -36,7 +36,7 @@ export function LayoutApp() {
                     <p className="text-lg font-semibold">{getConfig('app.title', import.meta.env.VITE_APP_TITLE)}</p>
                     <p className="text-xs text-slate-500">{user?.full_name}</p>
                 </div>
-                <nav className="flex flex-col gap-1 p-3">
+                <nav className="flex flex-col gap-1 p-4">
                     {menuGroups.map((group, groupIndex) => (
                         <div
                             key={group.id}

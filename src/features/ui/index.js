@@ -21,3 +21,5 @@ export { ConfirmDialog } from './ConfirmDialog';
 export { Tabs } from './Tabs';
 export { CompletionProgressBar } from './CompletionProgressBar';
 export { Badge } from './Badge';
+export { Alert } from './Alert';
+export { ParentRecordFormHeader } from './ParentRecordFormHeader';

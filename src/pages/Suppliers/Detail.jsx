@@ -62,6 +62,13 @@ export function SupplierDetail() {
     function openMaterialModal() {
         showModal(<MaterialSupplierFormModal />, {
             supplierId: id,
+            parentRecord: supplier && {
+                title: supplier.entity?.name ?? `Proveedor #${supplier.id}`,
+                data: {
+                    ID: supplier.id,
+                    RFC: supplier.entity?.rfc,
+                },
+            },
             onSave: updateMaterials,
         });
     }

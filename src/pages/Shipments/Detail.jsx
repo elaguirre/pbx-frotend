@@ -92,9 +92,20 @@ export function ShipmentDetail() {
         });
     }
 
+    const shipmentParentRecord = shipment && {
+        title: `Embarque #${shipment.id}`,
+        data: {
+            Transportista: shipment.carrier?.entity?.name,
+            Unidad:
+                shipment.carrier_unit?.description ?? shipment.carrierUnit?.description,
+            Conductor: shipment.driver?.entity?.name,
+        },
+    };
+
     function openPieceModal(lineRecord = null) {
         showModal(<ShipmentOrderPieceFormModal />, {
             shipmentId: id,
+            parentRecord: shipmentParentRecord,
             lineRecord,
             onSave: () => {
                 updatePieces();

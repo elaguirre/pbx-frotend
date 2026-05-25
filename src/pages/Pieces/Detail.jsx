@@ -62,6 +62,13 @@ export function PieceDetail() {
     function openMaterialModal(assignment = {}) {
         showModal(<PieceMaterialFormModal />, {
             pieceId: id,
+            parentRecord: piece && {
+                title: piece.name,
+                data: {
+                    ID: piece.id,
+                    Costo: formatCatalogCost(piece.cost),
+                },
+            },
             assignment,
             onSave: updateMaterials,
         });

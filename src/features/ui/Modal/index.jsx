@@ -1,6 +1,7 @@
 import { IconX } from '@tabler/icons-react';
 import classNames from 'classnames';
 import { Icon } from '../Icon';
+import { ParentRecordFormHeader } from '../ParentRecordFormHeader';
 
 const sizes = {
     sm: 'max-w-md',
@@ -15,6 +16,7 @@ export function Modal({
     size = 'md',
     zIndex = 100,
     title,
+    parentRecord,
     children,
 }) {
     if (!opened) {
@@ -60,7 +62,14 @@ export function Modal({
                     </div>
                 )}
 
-                <div className="overflow-y-auto px-5 py-4">{children}</div>
+                <div className="overflow-y-auto px-5 py-4">
+                    {parentRecord && (
+                        <div className="mb-4">
+                            <ParentRecordFormHeader {...parentRecord} />
+                        </div>
+                    )}
+                    {children}
+                </div>
             </div>
         </div>
     );

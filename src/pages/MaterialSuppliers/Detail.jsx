@@ -64,6 +64,15 @@ export function MaterialSupplierDetail() {
     function openPriceModal(priceRecord = null) {
         showModal(<MaterialSupplierPriceFormModal />, {
             materialSupplierId: id,
+            parentRecord: assignment && {
+                title: `${assignment.material?.name ?? 'Material'} · ${assignment.supplier?.entity?.name ?? 'Proveedor'}`,
+                data: {
+                    Unidad: assignment.material?.uom,
+                    'Precio vigente': assignment.latest_price
+                        ? formatMoney(assignment.latest_price.price)
+                        : null,
+                },
+            },
             priceRecord,
             onSave: () => {
                 updatePrices();

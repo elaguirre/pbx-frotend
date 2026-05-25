@@ -5,7 +5,13 @@ import { useAuth, useGlobalModals } from '@resources/contexts';
 import { driverService, shipmentDriverService } from '@resources/services';
 import { DriverFormModal } from '@pages/Carriers/DriverFormModal';
 
-export function ShipmentDriverFormModal({ shipmentId, carrierId, onSave, onClose, ...params }) {
+export function ShipmentDriverFormModal({
+    shipmentId,
+    carrierId,
+    onSave,
+    onClose,
+    ...params
+}) {
     const { userCan } = useAuth();
     const { showModal } = useGlobalModals();
     const [loading, setLoading] = useState(false);

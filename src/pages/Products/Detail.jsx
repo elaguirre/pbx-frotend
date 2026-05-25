@@ -62,6 +62,14 @@ export function ProductDetail() {
     function openPieceModal(assignment = {}) {
         showModal(<ProductPieceFormModal />, {
             productId: id,
+            parentRecord: product && {
+                title: product.name,
+                data: {
+                    SKU: product.sku,
+                    'Precio venta': formatMoney(product.price),
+                    Costo: formatCatalogCost(product.cost),
+                },
+            },
             assignment,
             onSave: updatePieces,
         });

@@ -74,8 +74,20 @@ export function ManufacturerOrderPieceDetail() {
     }, [id]);
 
     function openFollowUpModal(followUpRecord = null) {
+        const op = getOrderPiece(assignment);
+        const product = op?.order_concept?.product ?? op?.orderConcept?.product;
+
         showModal(<ManufacturingFollowUpFormModal />, {
             manufacturerOrderPieceId: id,
+            parentRecord: assignment && {
+                title: getPieceLabel(assignment),
+                data: {
+                    Producto: product?.name,
+                    Pedido: op?.order_id ?? op?.order?.id,
+                    'Cantidad asignada': formatQuantity(assignment.quantity),
+                    Terminadas: formatQuantity(assignment.finished_quantity ?? 0),
+                },
+            },
             followUpRecord,
             onSave: () => {
                 updateFollowUp();

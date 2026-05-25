@@ -76,9 +76,18 @@ export function CarrierDetail() {
         });
     }
 
+    const carrierParentRecord = carrier && {
+        title: carrier.entity?.name ?? `Transportista #${carrier.id}`,
+        data: {
+            ID: carrier.id,
+            RFC: carrier.entity?.rfc,
+        },
+    };
+
     function openUnitModal(unitRecord = null) {
         showModal(<CarrierUnitFormModal />, {
             carrierId: id,
+            parentRecord: carrierParentRecord,
             unitRecord,
             onSave: updateUnits,
         });
@@ -87,6 +96,7 @@ export function CarrierDetail() {
     function openDriverModal() {
         showModal(<DriverFormModal />, {
             carrierId: id,
+            parentRecord: carrierParentRecord,
             onSave: updateDrivers,
         });
     }

@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AppModule, Badge, Button, Table, Tabs } from '@features/ui';
+import { IconUserPlus } from '@tabler/icons-react';
+import { AppModule, Badge, Button, Table, Tabs, tableActionsColumn } from '@features/ui';
 import { getManufacturerOrderPieceStatusBadgeProps } from '@resources/constants/manufacturerOrderPieceStatus';
 import { getOrderStatusBadgeProps } from '@resources/constants/orders';
-import { formatDate, formatMoney, formatQuantity, getConceptLineTotal, getOrderTotal } from '@resources/helpers';
+import { formatDate, formatMoney, formatQuantity, getConceptLineTotal, getOrderTotal, normalizeListResponse } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
-import { useAuth } from '@resources/contexts';
-import { manufacturerOrderPieceService, orderService } from '@resources/services';
+import { useAuth, useGlobalModals } from '@resources/contexts';
+import { manufacturerOrderPieceService, orderPieceService, orderService } from '@resources/services';
+import { ManufacturerOrderPieceFormModal } from '@pages/ProductionOrders/ManufacturerOrderPieceFormModal';
 
 const ORDER_INCLUDES = 'client.entity,user,concepts.product';
 
@@ -27,15 +29,20 @@ export function OrderDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('concepts');
+    const [unassignedPieces, setUnassignedPieces] = useState([]);
+    const [loadingUnassigned, setLoadingUnassigned] = useState(false);
     const canViewProduction = userCan('manufacturer_order_pieces.view');
+    const canAssignProduction = userCan('manufacturer_order_pieces.add');
 
     const {
         data: productionData,
         controls: productionControls,
         loading: productionLoading,
+        updateList: updateProductionList,
     } = useDatatable({
         service: canViewProduction ? manufacturerOrderPieceService : null,
         serviceParams: {
@@ -53,6 +60,56 @@ export function OrderDetail() {
             .catch(() => setOrder(null))
             .finally(() => setLoading(false));
     }, [id]);
+
+    const loadUnassignedPieces = useCallback(() => {
+        if (!canViewProduction || !id) {
+            return Promise.resolve();
+        }
+
+        setLoadingUnassigned(true);
+
+        return orderPieceService
+            .getAll({
+                order_id: id,
+                paginated: false,
+                limit: 500,
+                include: 'piece,orderConcept.product,orderPieceStatus',
+            })
+            .then((response) => {
+                setUnassignedPieces(normalizeListResponse(response));
+            })
+            .catch(() => setUnassignedPieces([]))
+            .finally(() => setLoadingUnassigned(false));
+    }, [canViewProduction, id]);
+
+    useEffect(() => {
+        loadUnassignedPieces();
+    }, [loadUnassignedPieces]);
+
+    function refreshProduction() {
+        updateProductionList();
+        loadUnassignedPieces();
+    }
+
+    function openAssignModal(orderPiece) {
+        const product =
+            orderPiece?.order_concept?.product ?? orderPiece?.orderConcept?.product;
+        const pieceName = orderPiece?.piece?.name ?? `Pieza #${orderPiece?.piece_id ?? '—'}`;
+
+        showModal(<ManufacturerOrderPieceFormModal />, {
+            orderId: id,
+            parentRecord: order && orderPiece && {
+                title: `Pedido #${order.id} · ${pieceName}`,
+                data: {
+                    Cliente: order.client?.entity?.name,
+                    Producto: product?.name,
+                    'Cantidad del pedido': formatQuantity(orderPiece.quantity),
+                },
+            },
+            presetOrderPiece: orderPiece,
+            onSave: refreshProduction,
+        });
+    }
 
     const concepts = order?.concepts ?? [];
     const orderTotal = getOrderTotal(concepts);
@@ -93,6 +150,47 @@ export function OrderDetail() {
     ];
 
     const productionRows = productionData?.data ?? [];
+
+    const unassignedColumns = [
+        {
+            title: 'Producto',
+            column: (row) =>
+                row.order_concept?.product?.name ?? row.orderConcept?.product?.name ?? '—',
+        },
+        {
+            title: 'Pieza',
+            column: (row) => row.piece?.name ?? `Pieza #${row.piece_id ?? '—'}`,
+        },
+        {
+            title: 'Cantidad del pedido',
+            column: (row) => formatQuantity(row.quantity),
+        },
+        {
+            title: 'Asignado (total)',
+            column: (row) => {
+                const assigned = Number(row.assigned_quantity ?? 0);
+                const total = Number(row.quantity ?? 0);
+                const label = `${formatQuantity(assigned)} / ${formatQuantity(total)}`;
+
+                if (assigned < total) {
+                    return <span className="font-medium text-danger-700">{label}</span>;
+                }
+
+                return label;
+            },
+        },
+        tableActionsColumn({
+            actions: [
+                {
+                    label: 'Asignar',
+                    icon: IconUserPlus,
+                    show: canAssignProduction,
+                    onClick: (row) => openAssignModal(row),
+                },
+            ],
+        }),
+    ];
+
     const productionColumns = [
         {
             title: 'Maquilador',
@@ -193,20 +291,49 @@ export function OrderDetail() {
             </>
         );
 
-    const productionTabContent =
-        productionLoading || productionRows.length > 0 ? (
-            <Table
-                name="order-detail-production"
-                controls={productionControls}
-                columns={productionColumns}
-                data={productionData}
-                loading={productionLoading}
-            />
-        ) : (
-            <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                Este pedido no tiene piezas asignadas a producción.
-            </p>
-        );
+    const productionTabContent = (
+        <div className="space-y-8">
+            <div className="space-y-3">
+                <h2 className="text-sm font-semibold text-slate-900">Piezas del pedido</h2>
+                <p className="text-sm text-slate-500">
+                    La misma pieza puede asignarse a varios maquiladores (procesos distintos). El
+                    límite de cantidad es por orden de producción de cada maquilador.
+                </p>
+                {loadingUnassigned || unassignedPieces.length > 0 ? (
+                    <Table
+                        name="order-detail-unassigned-pieces"
+                        columns={unassignedColumns}
+                        data={unassignedPieces}
+                        loading={loadingUnassigned}
+                        isDatatable={false}
+                        showHeader={false}
+                        showFooter={false}
+                    />
+                ) : (
+                    <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                        Este pedido no tiene piezas registradas para producción.
+                    </p>
+                )}
+            </div>
+
+            <div className="space-y-3">
+                <h2 className="text-sm font-semibold text-slate-900">Piezas asignadas</h2>
+                {productionLoading || productionRows.length > 0 ? (
+                    <Table
+                        name="order-detail-production"
+                        controls={productionControls}
+                        columns={productionColumns}
+                        data={productionData}
+                        loading={productionLoading}
+                    />
+                ) : (
+                    <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                        Este pedido no tiene piezas asignadas a producción.
+                    </p>
+                )}
+            </div>
+        </div>
+    );
 
     const tabs = [
         { id: 'concepts', label: 'Conceptos', content: conceptsTabContent },

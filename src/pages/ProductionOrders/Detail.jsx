@@ -55,6 +55,15 @@ export function ProductionOrderDetail() {
     function openPieceModal(assignment = {}) {
         showModal(<ManufacturerOrderPieceFormModal />, {
             productionOrderId: id,
+            parentRecord: productionOrder && {
+                title: `ODP #${productionOrder.id} · ${
+                    productionOrder.manufacturer?.entity?.name ??
+                    `Maquilador #${productionOrder.manufacturer_id}`
+                }`,
+                data: {
+                    Creada: formatDate(productionOrder.created_at),
+                },
+            },
             assignment,
             onSave: refreshPiecesAndOrder,
         });

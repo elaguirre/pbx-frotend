@@ -62,6 +62,13 @@ export function MaterialDetail() {
     function openSupplierModal() {
         showModal(<MaterialSupplierFormModal />, {
             materialId: id,
+            parentRecord: material && {
+                title: material.name,
+                data: {
+                    'Unidad de medida': material.uom,
+                    Costo: formatCatalogCost(material.cost),
+                },
+            },
             onSave: updateSuppliers,
         });
     }

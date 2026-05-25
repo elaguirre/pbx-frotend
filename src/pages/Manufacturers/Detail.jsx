@@ -109,6 +109,13 @@ export function ManufacturerDetail() {
     function openCostModal(costRecord = null) {
         showModal(<ManufacturerPieceCostFormModal />, {
             manufacturerId: id,
+            parentRecord: manufacturer && {
+                title: manufacturer.entity?.name ?? `Maquilador #${manufacturer.id}`,
+                data: {
+                    ID: manufacturer.id,
+                    RFC: manufacturer.entity?.rfc,
+                },
+            },
             costRecord,
             onSave: updateCosts,
         });
@@ -197,7 +204,7 @@ export function ManufacturerDetail() {
     const tabs = [
         {
             id: 'production-orders',
-            label: 'Á“rdenes de producción',
+            label: 'Órdenes de producción',
             content: (
                 <Table
                     name="manufacturer-detail-production-orders"

@@ -9,8 +9,10 @@ import {
 } from '@resources/helpers';
 import {
     manufacturerOrderPieceService,
+    manufacturerService,
     orderPieceService,
     orderPieceStatusService,
+    productionOrderService,
 } from '@resources/services';
 
 function orderPieceLabel(row) {
@@ -48,15 +50,22 @@ function getStatusId(statusValue) {
     return String(statusValue);
 }
 
-function getMaxAssignableQuantity(orderPiece, assignment) {
+function getMaxAssignableQuantity(orderPiece, assignment, productionOrderScoped = false) {
     if (!orderPiece) {
         return null;
     }
 
-    const remaining =
-        orderPiece.remaining_quantity != null
-            ? Number(orderPiece.remaining_quantity)
-            : Number(orderPiece.quantity);
+    const total = Number(orderPiece.quantity);
+    let remaining;
+
+    if (productionOrderScoped) {
+        remaining =
+            orderPiece.remaining_quantity != null
+                ? Number(orderPiece.remaining_quantity)
+                : total - Number(orderPiece.assigned_quantity_in_production_order ?? 0);
+    } else {
+        remaining = total;
+    }
 
     if (assignment?.id && String(assignment.order_piece_id) === String(orderPiece.id)) {
         return remaining + Number(assignment.quantity ?? 0);
@@ -65,18 +74,48 @@ function getMaxAssignableQuantity(orderPiece, assignment) {
     return remaining;
 }
 
+async function resolveProductionOrderId(manufacturerId) {
+    const list = normalizeListResponse(
+        await productionOrderService.getAll({
+            manufacturer_id: Number(manufacturerId),
+            paginated: false,
+            limit: 1,
+            sort: '-id',
+        }),
+    );
+
+    if (list[0]?.id) {
+        return list[0].id;
+    }
+
+    const response = await productionOrderService.store({
+        manufacturer_id: Number(manufacturerId),
+    });
+
+    return (response?.data ?? response)?.id;
+}
+
 export function ManufacturerOrderPieceFormModal({
-    productionOrderId,
+    productionOrderId: initialProductionOrderId = null,
+    orderId = null,
+    presetOrderPiece = null,
     assignment = null,
     onSave,
     onClose,
     ...params
 }) {
     const isEdit = Boolean(assignment?.id);
+    const lockOrderPiece = Boolean(presetOrderPiece?.id) && !isEdit;
+    const needsManufacturer = !isEdit && !initialProductionOrderId;
+
     const [loading, setLoading] = useState(false);
+    const [manufacturerOptions, setManufacturerOptions] = useState([]);
     const [orderPiecesById, setOrderPiecesById] = useState({});
     const [options, setOptions] = useState([]);
     const [statusOptions, setStatusOptions] = useState([]);
+    const [manufacturerId, setManufacturerId] = useState('');
+    const [resolvedProductionOrderId, setResolvedProductionOrderId] = useState(null);
+    const [resolvingProductionOrder, setResolvingProductionOrder] = useState(false);
     const [values, setValues] = useState({
         available_status_id: getStatusId(
             assignment?.available_status_id ?? assignment?.available_status ?? assignment?.availableStatus,
@@ -85,10 +124,70 @@ export function ManufacturerOrderPieceFormModal({
             assignment?.status_of_completed_pieces ?? assignment?.statusOfCompletedPieces,
         ),
         order_piece_id:
-            assignment?.order_piece_id != null ? String(assignment.order_piece_id) : '',
-        quantity: quantityToInputValue(assignment?.quantity),
+            assignment?.order_piece_id != null
+                ? String(assignment.order_piece_id)
+                : presetOrderPiece?.id != null
+                  ? String(presetOrderPiece.id)
+                  : '',
+        quantity: quantityToInputValue(
+            assignment?.quantity ??
+                (presetOrderPiece ? getMaxAssignableQuantity(presetOrderPiece, null) : null),
+        ),
     });
     const [errors, setErrors] = useState({});
+
+    const productionOrderId = initialProductionOrderId ?? resolvedProductionOrderId;
+    const productionOrderScoped = Boolean(productionOrderId);
+
+    useEffect(() => {
+        if (!needsManufacturer || !manufacturerId) {
+            setResolvedProductionOrderId(null);
+
+            return;
+        }
+
+        let cancelled = false;
+        setResolvingProductionOrder(true);
+
+        resolveProductionOrderId(manufacturerId)
+            .then((orderId) => {
+                if (!cancelled) {
+                    setResolvedProductionOrderId(orderId);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setResolvedProductionOrderId(null);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setResolvingProductionOrder(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [needsManufacturer, manufacturerId]);
+
+    useEffect(() => {
+        if (!needsManufacturer) {
+            return;
+        }
+
+        manufacturerService
+            .getAll({ paginated: false, limit: 500, include: 'entity' })
+            .then((response) => {
+                setManufacturerOptions(
+                    normalizeListResponse(response).map((row) => ({
+                        value: String(row.id),
+                        label: row.entity?.name ?? `Maquilador #${row.id}`,
+                    })),
+                );
+            })
+            .catch(() => setManufacturerOptions([]));
+    }, [needsManufacturer]);
 
     useEffect(() => {
         orderPieceStatusService
@@ -109,19 +208,95 @@ export function ManufacturerOrderPieceFormModal({
     }, []);
 
     useEffect(() => {
+        if (needsManufacturer && !manufacturerId) {
+            if (lockOrderPiece && presetOrderPiece) {
+                setOrderPiecesById({ [presetOrderPiece.id]: presetOrderPiece });
+                setOptions([
+                    {
+                        value: String(presetOrderPiece.id),
+                        label: orderPieceLabel(presetOrderPiece),
+                    },
+                ]);
+            }
+
+            return;
+        }
+
+        if (needsManufacturer && resolvingProductionOrder) {
+            return;
+        }
+
+        const pieceInclude = 'piece,orderConcept.product,order,orderPieceStatus';
+        const assignmentParams = {
+            include: pieceInclude,
+            editing_manufacturer_order_piece_id: assignment?.id,
+        };
+
+        if (productionOrderId) {
+            assignmentParams.for_production_order_id = productionOrderId;
+        }
+
+        if (lockOrderPiece && presetOrderPiece?.id) {
+            orderPieceService
+                .get(presetOrderPiece.id, assignmentParams)
+                .then((row) => {
+                    const piece = row?.data ?? row;
+
+                    setOrderPiecesById({ [piece.id]: piece });
+                    setOptions([
+                        {
+                            value: String(piece.id),
+                            label: orderPieceLabel(piece),
+                        },
+                    ]);
+
+                    if (!isEdit) {
+                        const maxQty = getMaxAssignableQuantity(
+                            piece,
+                            assignment,
+                            productionOrderScoped,
+                        );
+
+                        setValues((current) => ({
+                            ...current,
+                            order_piece_id: String(piece.id),
+                            quantity: maxQty != null ? quantityToInputValue(maxQty) : '',
+                        }));
+                    }
+                })
+                .catch(() => {
+                    setOrderPiecesById({ [presetOrderPiece.id]: presetOrderPiece });
+                    setOptions([
+                        {
+                            value: String(presetOrderPiece.id),
+                            label: orderPieceLabel(presetOrderPiece),
+                        },
+                    ]);
+                });
+
+            return;
+        }
+
+        const query = {
+            limit: 500,
+            include: pieceInclude,
+            editing_manufacturer_order_piece_id: assignment?.id,
+        };
+
+        if (productionOrderId) {
+            query.for_production_order_id = productionOrderId;
+        } else if (orderId) {
+            query.order_id = orderId;
+        }
+
         orderPieceService
-            .getAll({
-                limit: 500,
-                include: 'piece,orderConcept.product,order,orderPieceStatus',
-                for_production_order_id: productionOrderId,
-                editing_manufacturer_order_piece_id: assignment?.id,
-            })
+            .getAll(query)
             .then((response) => {
                 const list = normalizeListResponse(response);
                 const byId = {};
 
                 const selectOptions = list.map((row) => {
-                        byId[row.id] = row;
+                    byId[row.id] = row;
 
                     return {
                         value: String(row.id),
@@ -136,7 +311,18 @@ export function ManufacturerOrderPieceFormModal({
                 setOptions([]);
                 setOrderPiecesById({});
             });
-    }, [assignment?.id, assignment?.order_piece_id, isEdit, productionOrderId]);
+    }, [
+        assignment,
+        isEdit,
+        lockOrderPiece,
+        manufacturerId,
+        needsManufacturer,
+        orderId,
+        presetOrderPiece,
+        productionOrderId,
+        productionOrderScoped,
+        resolvingProductionOrder,
+    ]);
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -147,7 +333,7 @@ export function ManufacturerOrderPieceFormModal({
     function handleOrderPieceChange(event) {
         const orderPieceId = event.target.value;
         const orderPiece = orderPiecesById[orderPieceId];
-        const maxQty = getMaxAssignableQuantity(orderPiece, assignment);
+        const maxQty = getMaxAssignableQuantity(orderPiece, assignment, productionOrderScoped);
 
         setValues((current) => ({
             ...current,
@@ -160,7 +346,19 @@ export function ManufacturerOrderPieceFormModal({
     function validate() {
         const nextErrors = {};
         const orderPiece = orderPiecesById[values.order_piece_id];
-        const maxQty = getMaxAssignableQuantity(orderPiece, assignment);
+        const maxQty = getMaxAssignableQuantity(orderPiece, assignment, productionOrderScoped);
+
+        if (needsManufacturer && !manufacturerId) {
+            nextErrors.manufacturer_id = 'Seleccione un maquilador';
+        }
+
+        if (needsManufacturer && manufacturerId && resolvingProductionOrder) {
+            nextErrors.manufacturer_id = 'Espere a resolver la orden de producción del maquilador';
+        }
+
+        if (needsManufacturer && manufacturerId && !resolvingProductionOrder && !productionOrderId) {
+            nextErrors.manufacturer_id = 'No se pudo obtener la orden de producción del maquilador';
+        }
 
         if (!values.available_status_id) {
             nextErrors.available_status_id = 'Seleccione el estado requerido de la pieza';
@@ -200,15 +398,18 @@ export function ManufacturerOrderPieceFormModal({
 
         setLoading(true);
 
-        const payload = {
-            production_order_id: Number(productionOrderId),
-            order_piece_id: Number(values.order_piece_id),
-            quantity: roundQuantity(values.quantity) ?? Number(values.quantity),
-            available_status_id: Number(values.available_status_id),
-            status_of_completed_pieces: Number(values.status_of_completed_pieces),
-        };
-
         try {
+            const targetProductionOrderId =
+                productionOrderId ?? (await resolveProductionOrderId(manufacturerId));
+
+            const payload = {
+                production_order_id: Number(targetProductionOrderId),
+                order_piece_id: Number(values.order_piece_id),
+                quantity: roundQuantity(values.quantity) ?? Number(values.quantity),
+                available_status_id: Number(values.available_status_id),
+                status_of_completed_pieces: Number(values.status_of_completed_pieces),
+            };
+
             const response = isEdit
                 ? await manufacturerOrderPieceService.update(assignment.id, payload)
                 : await manufacturerOrderPieceService.store(payload);
@@ -227,7 +428,11 @@ export function ManufacturerOrderPieceFormModal({
     }
 
     const selectedOrderPiece = orderPiecesById[values.order_piece_id];
-    const maxHint = getMaxAssignableQuantity(selectedOrderPiece, assignment);
+    const maxHint = getMaxAssignableQuantity(
+        selectedOrderPiece,
+        assignment,
+        productionOrderScoped,
+    );
 
     return (
         <Modal
@@ -236,6 +441,20 @@ export function ManufacturerOrderPieceFormModal({
             onClose={onClose}
         >
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                {needsManufacturer && (
+                    <Select
+                        label="Maquilador"
+                        name="manufacturer_id"
+                        value={manufacturerId}
+                        onChange={(event) => {
+                            setManufacturerId(event.target.value);
+                            setErrors((current) => ({ ...current, manufacturer_id: null }));
+                        }}
+                        options={manufacturerOptions}
+                        required
+                        error={errors.manufacturer_id}
+                    />
+                )}
                 <Select
                     label="Pieza de pedido"
                     name="order_piece_id"
@@ -243,7 +462,7 @@ export function ManufacturerOrderPieceFormModal({
                     onChange={handleOrderPieceChange}
                     options={options}
                     required
-                    disabled={isEdit}
+                    disabled={isEdit || lockOrderPiece}
                     error={errors.order_piece_id}
                 />
                 <Select
