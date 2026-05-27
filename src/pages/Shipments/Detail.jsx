@@ -1,26 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowDown, IconArrowUp, IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Badge, Button, Table, Tabs, tableActionsColumn } from '@features/ui';
+import { AppModule, Badge, Button, DetailField, Table, Tabs, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
 import {
     getShipmentOrderPieceStatusBadgeProps,
 } from '@resources/constants/shipmentOrderPieces';
 import { getShipmentRouteStatusBadgeProps } from '@resources/constants/shipmentRoutes';
-import { formatDate, formatEntityAddressLine, formatQuantity } from '@resources/helpers';
+import { formatDate, formatEntityAddressLine, formatQuantity, getOrderPiece } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
 import { shipmentOrderPieceService, shipmentRouteService, shipmentService } from '@resources/services';
 import { FormModal } from './FormModal';
 import { ShipmentOrderPieceFormModal } from './ShipmentOrderPieceFormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function ShipmentDetail() {
     const sectionIcon = useSectionIcon();
@@ -147,17 +138,17 @@ export function ShipmentDetail() {
         {
             title: 'Pedido',
             column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
+                const orderPiece = getOrderPiece(row);
 
-                return op?.order_id ?? op?.order?.id ?? '—';
+                return orderPiece?.order_id ?? orderPiece?.order?.id ?? '—';
             },
         },
         {
             title: 'Pieza',
             column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
+                const orderPiece = getOrderPiece(row);
 
-                return op?.piece?.name ?? `Pieza #${op?.piece_id ?? '—'}`;
+                return orderPiece?.piece?.name ?? `Pieza #${orderPiece?.piece_id ?? '—'}`;
             },
         },
         { title: 'Cantidad', column: (row) => formatQuantity(row.quantity) },

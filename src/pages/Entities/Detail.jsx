@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AppModule, Button, Tabs } from '@features/ui';
+import { AppModule, Button, DetailField, Tabs } from '@features/ui';
 import { ContactDataPanel } from '@pages/ContactData/ContactDataPanel';
 import { EntityAddressPanel } from '@pages/EntityAddresses/EntityAddressPanel';
 import { getEntityTypeLabel } from '@resources/constants/catalog';
-import { formatDate } from '@resources/helpers';
+import { formatDate, getMainImageUrl } from '@resources/helpers';
 import { useAuth, useGlobalModals } from '@resources/contexts';
 import { useSectionIcon } from '@resources/hooks';
 import { entityService } from '@resources/services';
 import { FormModal } from './FormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function EntityDetail() {
     const sectionIcon = useSectionIcon();
@@ -130,10 +121,10 @@ export function EntityDetail() {
                 <DetailField label="Creada">{formatDate(entity.created_at)}</DetailField>
             </dl>
 
-            {entity.image && (
+            {getMainImageUrl(entity.images) && (
                 <div className="mt-4">
                     <img
-                        src={entity.image}
+                        src={getMainImageUrl(entity.images)}
                         alt={entity.name}
                         className="h-24 w-24 rounded-lg object-cover"
                     />

@@ -3,6 +3,7 @@ import { Input, Modal, SaveButton, Select } from '@features/ui';
 import { SHIPMENT_ORDER_PIECE_STATUSES } from '@resources/constants/shipmentOrderPieces';
 import {
     formatQuantity,
+    getOrderConcept,
     normalizeListResponse,
     parseApiErrors,
     quantityToInputValue,
@@ -21,9 +22,9 @@ function remainingForShipment(orderPiece, lineRecord = null) {
     return Math.max(0, total - shipped + lineQty);
 }
 
-function orderPieceLabel(row, lineRecord = null) {
+function getOrderPieceOptionText(row, lineRecord = null) {
     const orderId = row.order_id ?? row.order?.id ?? '—';
-    const product = row.order_concept?.product?.name ?? row.orderConcept?.product?.name ?? '—';
+    const product = getOrderConcept(row)?.product?.name ?? '—';
     const piece = row.piece?.name ?? `Pieza #${row.piece_id}`;
     const status = row.order_piece_status?.name ?? row.orderPieceStatus?.name ?? '—';
     const remaining = remainingForShipment(row, lineRecord);
@@ -87,7 +88,7 @@ export function ShipmentOrderPieceFormModal({
 
                         return {
                             value: String(row.id),
-                            label: orderPieceLabel(row, lineRecord),
+                            label: getOrderPieceOptionText(row, lineRecord),
                         };
                     }),
                 );

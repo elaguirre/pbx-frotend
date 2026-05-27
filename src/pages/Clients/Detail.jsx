@@ -1,24 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AppModule, Badge, Button, Table, Tabs } from '@features/ui';
+import { AppModule, Badge, Button, DetailField, Table, Tabs } from '@features/ui';
 import { ContactDataPanel } from '@pages/ContactData/ContactDataPanel';
 import { EntityAddressPanel } from '@pages/EntityAddresses/EntityAddressPanel';
 import { getEntityTypeLabel } from '@resources/constants/catalog';
 import { getOrderStatusBadgeProps } from '@resources/constants/orders';
-import { formatDate } from '@resources/helpers';
+import { formatDate, getMainImageUrl } from '@resources/helpers';
 import { useAuth, useGlobalModals } from '@resources/contexts';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
 import { clientService, orderService } from '@resources/services';
 import { FormModal } from './FormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function ClientDetail() {
     const sectionIcon = useSectionIcon();
@@ -52,14 +43,14 @@ export function ClientDetail() {
         setLoading(true);
 
         clientService
-            .get(id, { include: 'entity' })
+            .get(id, { include: 'entity.images' })
             .then(setClient)
             .catch(() => setClient(null))
             .finally(() => setLoading(false));
     }, [id]);
 
     function refreshClient() {
-        return clientService.get(id, { include: 'entity' }).then(setClient);
+        return clientService.get(id, { include: 'entity.images' }).then(setClient);
     }
 
     function openEditModal() {
@@ -191,10 +182,10 @@ export function ClientDetail() {
                 <DetailField label="Registrado">{formatDate(client.created_at)}</DetailField>
             </dl>
 
-            {entity?.image && (
+            {getMainImageUrl(entity?.images) && (
                 <div className="mt-4">
                     <img
-                        src={entity.image}
+                        src={getMainImageUrl(entity?.images)}
                         alt={entity.name}
                         className="h-24 w-24 rounded-lg object-cover"
                     />

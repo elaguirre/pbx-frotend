@@ -13,7 +13,9 @@ export const orderService = {
 
     getCurrent(params = {}) {
         return axios
-            .get(`${urlBase}/current`, { params: { include: 'client.entity,concepts.product', ...params } })
+            .get(`${urlBase}/current`, {
+                params: { include: 'client.entity.images,concepts.product.images', ...params },
+            })
             .then((res) => res.data);
     },
 

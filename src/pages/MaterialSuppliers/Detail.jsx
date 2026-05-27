@@ -1,22 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Button, Table, TableActionsDropdown } from '@features/ui';
+import { AppModule, Button, DetailField, Table, TableActionsDropdown } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
 import { formatDate, formatMoney } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
 import { materialSupplierService, materialSupplierPriceService } from '@resources/services';
 import { MaterialSupplierFormModal } from '@pages/Materials/MaterialSupplierFormModal';
 import { MaterialSupplierPriceFormModal } from './MaterialSupplierPriceFormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function MaterialSupplierDetail() {
     const sectionIcon = useSectionIcon();

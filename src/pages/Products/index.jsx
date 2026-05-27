@@ -2,7 +2,7 @@ import { IconPencil, IconShoppingCartPlus, IconTrash } from '@tabler/icons-react
 import { useNavigate } from 'react-router-dom';
 import { AppModule, Button, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
-import { formatCatalogCost, formatMoney } from '@resources/helpers';
+import { formatCatalogCost, formatMoney, getMainImageUrl } from '@resources/helpers';
 import { useDatatable } from '@resources/hooks';
 import { useAppStore } from '@resources/store';
 import { getMenuIconByLink } from '@resources/menu';
@@ -62,12 +62,15 @@ export function Products() {
         { title: 'Slug', column: 'slug', isSortable: true },
         {
             title: 'Imagen',
-            column: (row) =>
-                row.image ? (
-                    <img src={row.image} alt={row.name} className="h-10 w-10 rounded object-cover" />
+            column: (row) => {
+                const mainImageUrl = getMainImageUrl(row.images);
+
+                return mainImageUrl ? (
+                    <img src={mainImageUrl} alt={row.name} className="h-10 w-10 rounded object-cover" />
                 ) : (
                     <span className="text-slate-400">—</span>
-                ),
+                );
+            },
         },
         { title: 'Nombre', column: 'name', isSortable: true },
         {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Button, CompletionProgressBar, Table, TableActionsDropdown, Tabs, tableActionsColumn } from '@features/ui';
+import { AppModule, Button, CompletionProgressBar, DetailField, Table, TableActionsDropdown, Tabs, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
 import { formatCatalogCost, formatDate, formatMoney } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
@@ -12,15 +12,6 @@ import {
 } from '@resources/services';
 import { ManufacturerPieceCostFormModal } from './ManufacturerPieceCostFormModal';
 import { FormModal } from './FormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function ManufacturerDetail() {
     const sectionIcon = useSectionIcon();

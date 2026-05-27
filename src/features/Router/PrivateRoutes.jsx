@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { LayoutApp } from '@features/layouts';
 import { OrderDetail } from '@pages/Orders/Detail';
+import { OrderPieceDetail } from '@pages/Orders/OrderPieceDetail';
 import { ProductDetail } from '@pages/Products/Detail';
 import { PieceDetail } from '@pages/Pieces/Detail';
 import { MaterialDetail } from '@pages/Materials/Detail';
@@ -44,6 +45,9 @@ export function PrivateRoutes() {
                         <Route key={item.link} path={item.link.replace(/^\//, '')} element={item.element} />
                     ))}
                 {userCan('orders.view') && <Route path="orders/:id" element={<OrderDetail />} />}
+                {userCan('order_pieces.view') && (
+                    <Route path="order-pieces/:id" element={<OrderPieceDetail />} />
+                )}
                 {userCan('clients.view') && <Route path="clients/:id" element={<ClientDetail />} />}
                 {userCan('products.view') && <Route path="products/:id" element={<ProductDetail />} />}
                 {userCan('pieces.view') && <Route path="pieces/:id" element={<PieceDetail />} />}

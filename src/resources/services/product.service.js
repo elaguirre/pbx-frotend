@@ -2,21 +2,43 @@ import axios from 'axios';
 
 const urlBase = 'products';
 
+const defaultParams = { include: 'images' };
+
+function submit(method, url, values) {
+    if (values instanceof FormData) {
+        if (method === 'put') {
+            values.append('_method', 'PUT');
+
+            return axios.post(url, values).then((res) => res.data);
+        }
+
+        return axios.post(url, values).then((res) => res.data);
+    }
+
+    if (method === 'put') {
+        return axios.put(url, values).then((res) => res.data);
+    }
+
+    return axios.post(url, values).then((res) => res.data);
+}
+
 export const productService = {
     getAll(params = {}) {
-        return axios.get(urlBase, { params: { paginated: true, ...params } }).then((res) => res.data);
+        return axios
+            .get(urlBase, { params: { paginated: true, ...defaultParams, ...params } })
+            .then((res) => res.data);
     },
 
     get(id, params = {}) {
-        return axios.get(`${urlBase}/${id}`, { params }).then((res) => res.data);
+        return axios.get(`${urlBase}/${id}`, { params: { ...defaultParams, ...params } }).then((res) => res.data);
     },
 
     store(values) {
-        return axios.post(urlBase, values).then((res) => res.data);
+        return submit('post', urlBase, values);
     },
 
     update(id, values) {
-        return axios.put(`${urlBase}/${id}`, values).then((res) => res.data);
+        return submit('put', `${urlBase}/${id}`, values);
     },
 
     destroy(id) {

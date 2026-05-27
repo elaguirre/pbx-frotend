@@ -1,28 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { IconUserPlus } from '@tabler/icons-react';
-import { AppModule, Badge, Button, Table, Tabs, tableActionsColumn } from '@features/ui';
-import { getManufacturerOrderPieceStatusBadgeProps } from '@resources/constants/manufacturerOrderPieceStatus';
+import { AppModule, Badge, Button, DetailField, Table, Tabs, tableActionsColumn } from '@features/ui';
 import { getOrderStatusBadgeProps } from '@resources/constants/orders';
-import { formatDate, formatMoney, formatQuantity, getConceptLineTotal, getOrderTotal, normalizeListResponse } from '@resources/helpers';
-import { useDatatable, useSectionIcon } from '@resources/hooks';
+import { formatDate, formatMoney, formatQuantity, getConceptLineTotal, getOrderTotal, getOrderConcept, normalizeListResponse } from '@resources/helpers';
+import { useSectionIcon } from '@resources/hooks';
 import { useAuth, useGlobalModals } from '@resources/contexts';
-import { manufacturerOrderPieceService, orderPieceService, orderService } from '@resources/services';
+import { orderPieceService, orderService } from '@resources/services';
 import { ManufacturerOrderPieceFormModal } from '@pages/ProductionOrders/ManufacturerOrderPieceFormModal';
 
 const ORDER_INCLUDES = 'client.entity,user,concepts.product';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
-
-const PRODUCTION_INCLUDES =
-    'orderPiece.piece,orderPiece.orderConcept.product,productionOrder.manufacturer.entity,availableStatus,statusOfCompletedPieces';
 
 export function OrderDetail() {
     const sectionIcon = useSectionIcon();
@@ -33,23 +20,10 @@ export function OrderDetail() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('concepts');
-    const [unassignedPieces, setUnassignedPieces] = useState([]);
-    const [loadingUnassigned, setLoadingUnassigned] = useState(false);
+    const [orderPieces, setOrderPieces] = useState([]);
+    const [loadingOrderPieces, setLoadingOrderPieces] = useState(false);
     const canViewProduction = userCan('manufacturer_order_pieces.view');
     const canAssignProduction = userCan('manufacturer_order_pieces.add');
-
-    const {
-        data: productionData,
-        controls: productionControls,
-        loading: productionLoading,
-        updateList: updateProductionList,
-    } = useDatatable({
-        service: canViewProduction ? manufacturerOrderPieceService : null,
-        serviceParams: {
-            include: PRODUCTION_INCLUDES,
-            order_id: id,
-        },
-    });
 
     useEffect(() => {
         setLoading(true);
@@ -61,12 +35,12 @@ export function OrderDetail() {
             .finally(() => setLoading(false));
     }, [id]);
 
-    const loadUnassignedPieces = useCallback(() => {
+    const loadOrderPieces = useCallback(() => {
         if (!canViewProduction || !id) {
             return Promise.resolve();
         }
 
-        setLoadingUnassigned(true);
+        setLoadingOrderPieces(true);
 
         return orderPieceService
             .getAll({
@@ -76,24 +50,18 @@ export function OrderDetail() {
                 include: 'piece,orderConcept.product,orderPieceStatus',
             })
             .then((response) => {
-                setUnassignedPieces(normalizeListResponse(response));
+                setOrderPieces(normalizeListResponse(response));
             })
-            .catch(() => setUnassignedPieces([]))
-            .finally(() => setLoadingUnassigned(false));
+            .catch(() => setOrderPieces([]))
+            .finally(() => setLoadingOrderPieces(false));
     }, [canViewProduction, id]);
 
     useEffect(() => {
-        loadUnassignedPieces();
-    }, [loadUnassignedPieces]);
-
-    function refreshProduction() {
-        updateProductionList();
-        loadUnassignedPieces();
-    }
+        loadOrderPieces();
+    }, [loadOrderPieces]);
 
     function openAssignModal(orderPiece) {
-        const product =
-            orderPiece?.order_concept?.product ?? orderPiece?.orderConcept?.product;
+        const product = getOrderConcept(orderPiece)?.product;
         const pieceName = orderPiece?.piece?.name ?? `Pieza #${orderPiece?.piece_id ?? '—'}`;
 
         showModal(<ManufacturerOrderPieceFormModal />, {
@@ -107,7 +75,7 @@ export function OrderDetail() {
                 },
             },
             presetOrderPiece: orderPiece,
-            onSave: refreshProduction,
+            onSave: loadOrderPieces,
         });
     }
 
@@ -149,21 +117,16 @@ export function OrderDetail() {
         },
     ];
 
-    const productionRows = productionData?.data ?? [];
+    const canViewOrderPiece = userCan('order_pieces.view');
 
-    const unassignedColumns = [
+    const orderPiecesColumns = [
         {
             title: 'Producto',
-            column: (row) =>
-                row.order_concept?.product?.name ?? row.orderConcept?.product?.name ?? '—',
+            column: (row) => getOrderConcept(row)?.product?.name ?? '—',
         },
         {
             title: 'Pieza',
             column: (row) => row.piece?.name ?? `Pieza #${row.piece_id ?? '—'}`,
-        },
-        {
-            title: 'Cantidad del pedido',
-            column: (row) => formatQuantity(row.quantity),
         },
         {
             title: 'Asignado (total)',
@@ -191,82 +154,6 @@ export function OrderDetail() {
         }),
     ];
 
-    const productionColumns = [
-        {
-            title: 'Maquilador',
-            column: (row) => {
-                const po = row.production_order ?? row.productionOrder;
-                const name = po?.manufacturer?.entity?.name;
-
-                if (!name) {
-                    return po?.manufacturer_id ? `Maquilador #${po.manufacturer_id}` : '—';
-                }
-
-                if (userCan('manufacturers.view') && po?.manufacturer_id) {
-                    return (
-                        <Link
-                            to={`/manufacturers/${po.manufacturer_id}`}
-                            className="font-medium text-primary-600 hover:text-primary-700"
-                        >
-                            {name}
-                        </Link>
-                    );
-                }
-
-                return name;
-            },
-        },
-        {
-            title: 'ODP',
-            column: (row) => {
-                const productionOrderId =
-                    row.production_order_id ?? row.production_order?.id ?? row.productionOrder?.id;
-
-                if (!productionOrderId) {
-                    return '—';
-                }
-
-                if (userCan('production_orders.view')) {
-                    return (
-                        <Link
-                            to={`/production-orders/${productionOrderId}`}
-                            className="font-medium text-primary-600 hover:text-primary-700"
-                        >
-                            #{productionOrderId}
-                        </Link>
-                    );
-                }
-
-                return `#${productionOrderId}`;
-            },
-        },
-        {
-            title: 'Producto',
-            column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
-
-                return op?.order_concept?.product?.name ?? op?.orderConcept?.product?.name ?? '—';
-            },
-        },
-        {
-            title: 'Pieza',
-            column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
-
-                return op?.piece?.name ?? `Pieza #${op?.piece_id ?? '—'}`;
-            },
-        },
-        { title: 'Cantidad asignada', column: 'quantity', isSortable: true },
-        {
-            title: 'Piezas terminadas',
-            column: (row) => formatQuantity(row.finished_quantity ?? 0),
-        },
-        {
-            title: 'Estado de manufactura',
-            column: (row) => <Badge {...getManufacturerOrderPieceStatusBadgeProps(row.status)} />,
-        },
-    ];
-
     const conceptsTabContent =
         concepts.length === 0 ? (
             <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
@@ -292,46 +179,28 @@ export function OrderDetail() {
         );
 
     const productionTabContent = (
-        <div className="space-y-8">
-            <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-slate-900">Piezas del pedido</h2>
-                <p className="text-sm text-slate-500">
-                    La misma pieza puede asignarse a varios maquiladores (procesos distintos). El
-                    límite de cantidad es por orden de producción de cada maquilador.
+        <div className="space-y-3">
+            <p className="text-sm text-slate-500">
+                La misma pieza puede asignarse a varios maquiladores (procesos distintos). El
+                límite de cantidad es por orden de producción de cada maquilador.
+            </p>
+            {loadingOrderPieces || orderPieces.length > 0 ? (
+                <Table
+                    name="order-detail-order-pieces"
+                    columns={orderPiecesColumns}
+                    data={orderPieces}
+                    loading={loadingOrderPieces}
+                    isDatatable={false}
+                    showHeader={false}
+                    showFooter={false}
+                    onRowView={(row) => navigate(`/order-pieces/${row.id}`)}
+                    showRowView={canViewOrderPiece}
+                />
+            ) : (
+                <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                    Este pedido no tiene piezas registradas para producción.
                 </p>
-                {loadingUnassigned || unassignedPieces.length > 0 ? (
-                    <Table
-                        name="order-detail-unassigned-pieces"
-                        columns={unassignedColumns}
-                        data={unassignedPieces}
-                        loading={loadingUnassigned}
-                        isDatatable={false}
-                        showHeader={false}
-                        showFooter={false}
-                    />
-                ) : (
-                    <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                        Este pedido no tiene piezas registradas para producción.
-                    </p>
-                )}
-            </div>
-
-            <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-slate-900">Piezas asignadas</h2>
-                {productionLoading || productionRows.length > 0 ? (
-                    <Table
-                        name="order-detail-production"
-                        controls={productionControls}
-                        columns={productionColumns}
-                        data={productionData}
-                        loading={productionLoading}
-                    />
-                ) : (
-                    <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                        Este pedido no tiene piezas asignadas a producción.
-                    </p>
-                )}
-            </div>
+            )}
         </div>
     );
 

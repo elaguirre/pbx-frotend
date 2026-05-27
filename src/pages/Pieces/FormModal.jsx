@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { Modal, SaveButton, Input } from '@features/ui';
-import { parseApiErrors } from '@resources/helpers';
+import { parseApiErrors, quantityToInputValue, roundQuantity } from '@resources/helpers';
 import { pieceService } from '@resources/services';
 
 const emptyValues = {
     id: null,
     name: '',
+    volume: '',
+    weight: '',
 };
 
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     const [loading, setLoading] = useState(false);
-    const [values, setValues] = useState({ ...emptyValues, ...formValues });
+    const [values, setValues] = useState({
+        ...emptyValues,
+        ...formValues,
+        volume: quantityToInputValue(formValues.volume),
+        weight: quantityToInputValue(formValues.weight),
+    });
     const [errors, setErrors] = useState({});
 
     function handleChange(event) {
@@ -23,6 +30,14 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         const nextErrors = {};
 
         if (!values.name?.trim()) nextErrors.name = 'El nombre es obligatorio';
+
+        if (values.volume !== '' && Number(values.volume) < 0) {
+            nextErrors.volume = 'El volumen no puede ser negativo';
+        }
+
+        if (values.weight !== '' && Number(values.weight) < 0) {
+            nextErrors.weight = 'El peso no puede ser negativo';
+        }
 
         setErrors(nextErrors);
 
@@ -40,6 +55,14 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
 
         const payload = {
             name: values.name.trim(),
+            volume:
+                values.volume === ''
+                    ? null
+                    : roundQuantity(values.volume) ?? Number(values.volume),
+            weight:
+                values.weight === ''
+                    ? null
+                    : roundQuantity(values.weight) ?? Number(values.weight),
         };
 
         try {
@@ -70,6 +93,26 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     onChange={handleChange}
                     required
                     error={errors.name}
+                />
+                <Input
+                    label="Volumen (m³)"
+                    name="volume"
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={values.volume}
+                    onChange={handleChange}
+                    error={errors.volume}
+                />
+                <Input
+                    label="Peso (kg)"
+                    name="weight"
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={values.weight}
+                    onChange={handleChange}
+                    error={errors.weight}
                 />
                 <div className="flex justify-end border-t border-slate-100 pt-4">
                     <SaveButton loading={loading} />

@@ -2,7 +2,7 @@ import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { AppModule, Button, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
-import { formatCatalogCost } from '@resources/helpers';
+import { formatCatalogCost, formatQuantity } from '@resources/helpers';
 import { useDatatable } from '@resources/hooks';
 import { getMenuIconByLink } from '@resources/menu';
 import { pieceService } from '@resources/services';
@@ -38,6 +38,16 @@ export function Pieces() {
     const columns = [
         { title: 'ID', column: 'id', isSortable: true },
         { title: 'Nombre', column: 'name', isSortable: true },
+        {
+            title: 'Volumen (m³)',
+            column: (row) => (row.volume != null ? formatQuantity(row.volume) : '—'),
+            isSortable: true,
+        },
+        {
+            title: 'Peso (kg)',
+            column: (row) => (row.weight != null ? formatQuantity(row.weight) : '—'),
+            isSortable: true,
+        },
         { title: 'Costo', column: (row) => formatCatalogCost(row.cost) },
         ...(userCan('pieces.view') || hasDropdownActions
             ? [

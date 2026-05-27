@@ -1,26 +1,53 @@
-import { useState } from 'react';
-import { Modal, SaveButton, Input, Textarea } from '@features/ui';
-import { parseApiErrors } from '@resources/helpers';
+import { useEffect, useState } from 'react';
+import { Modal, SaveButton, Input, Textarea, FileInput } from '@features/ui';
+import { getMainImageUrl, parseApiErrors } from '@resources/helpers';
 import { productService } from '@resources/services';
 
 const emptyValues = {
     id: null,
     sku: '',
-    image: '',
     name: '',
     price: '',
     details: '',
+    images: [],
 };
 
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     const [loading, setLoading] = useState(false);
     const [values, setValues] = useState({ ...emptyValues, ...formValues });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(() => getMainImageUrl(formValues.images));
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        return () => {
+            if (imagePreview?.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
 
     function handleChange(event) {
         const { name, value } = event.target;
         setValues((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleImageChange(event) {
+        const file = event.target.files?.[0] ?? null;
+
+        setImageFile(file);
+        setErrors((current) => ({ ...current, image: null }));
+
+        if (imagePreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(imagePreview);
+        }
+
+        if (file) {
+            setImagePreview(URL.createObjectURL(file));
+        } else {
+            setImagePreview(getMainImageUrl(values.images));
+        }
     }
 
     function validate() {
@@ -44,18 +71,20 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
 
         setLoading(true);
 
-        const payload = {
-            sku: values.sku.trim(),
-            image: values.image?.trim() || null,
-            name: values.name.trim(),
-            price: Number(values.price),
-            details: values.details?.trim() || null,
-        };
+        const formData = new FormData();
+        formData.append('sku', values.sku.trim());
+        formData.append('name', values.name.trim());
+        formData.append('price', String(Number(values.price)));
+        formData.append('details', values.details?.trim() || '');
+
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
 
         try {
             const response = values.id
-                ? await productService.update(values.id, payload)
-                : await productService.store(payload);
+                ? await productService.update(values.id, formData)
+                : await productService.store(formData);
 
             onSave?.(response?.data ?? response);
             onClose?.();
@@ -103,14 +132,12 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     />
                 </div>
 
-
-                <Input
-                    label="Imagen (URL)"
+                <FileInput
+                    label="Imagen principal"
                     name="image"
-                    type="url"
-                    value={values.image}
-                    onChange={handleChange}
-                    placeholder="https://..."
+                    previewUrl={imagePreview}
+                    onChange={handleImageChange}
+                    hint="JPG, PNG o WebP. Máximo 5 MB."
                     error={errors.image}
                 />
 

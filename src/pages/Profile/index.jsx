@@ -1,16 +1,7 @@
 import { IconLogout } from '@tabler/icons-react';
-import { AppModule, Button } from '@features/ui';
+import { AppModule, Button, DetailField } from '@features/ui';
 import { useAuth } from '@resources/contexts';
 import { getMenuIconForPath } from '@resources/menu';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function Profile() {
     const { user, logout } = useAuth();

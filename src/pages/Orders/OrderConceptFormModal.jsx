@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Button, Input, Modal, SaveButton, Select, Textarea } from '@features/ui';
-import { formatMoney, isPriceModified, parseApiErrors, quantityToInputValue, roundQuantity } from '@resources/helpers';
+import {
+    formatMoney,
+    getMainImage,
+    isPriceModified,
+    parseApiErrors,
+    quantityToInputValue,
+    roundQuantity,
+} from '@resources/helpers';
 import { orderConceptService, productService } from '@resources/services';
 
 function buildInitialValues({ product, concept }) {
@@ -145,9 +152,9 @@ export function OrderConceptFormModal({
                 {displayProduct && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                         <div className="flex gap-4">
-                            {displayProduct.image ? (
+                            {getMainImage(displayProduct.images) ? (
                                 <img
-                                    src={displayProduct.image}
+                                    src={getMainImage(displayProduct.images).url}
                                     alt={displayProduct.name}
                                     className="h-16 w-16 shrink-0 rounded-lg object-cover"
                                 />

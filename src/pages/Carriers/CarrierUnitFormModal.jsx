@@ -8,6 +8,8 @@ const emptyValues = {
     description: '',
     load_volume_capacity: '',
     load_weight_capacity: '',
+    price_by_volume: '',
+    price_by_weight: '',
 };
 
 export function CarrierUnitFormModal({ carrierId, unitRecord = null, onSave, onClose, ...params }) {
@@ -19,6 +21,8 @@ export function CarrierUnitFormModal({ carrierId, unitRecord = null, onSave, onC
         description: unitRecord?.description ?? '',
         load_volume_capacity: quantityToInputValue(unitRecord?.load_volume_capacity),
         load_weight_capacity: quantityToInputValue(unitRecord?.load_weight_capacity),
+        price_by_volume: quantityToInputValue(unitRecord?.price_by_volume),
+        price_by_weight: quantityToInputValue(unitRecord?.price_by_weight),
     });
     const [errors, setErrors] = useState({});
 
@@ -43,6 +47,14 @@ export function CarrierUnitFormModal({ carrierId, unitRecord = null, onSave, onC
             nextErrors.load_weight_capacity = 'Indique la capacidad de peso (kg)';
         }
 
+        if (values.price_by_volume !== '' && Number(values.price_by_volume) < 0) {
+            nextErrors.price_by_volume = 'El precio por volumen no puede ser negativo';
+        }
+
+        if (values.price_by_weight !== '' && Number(values.price_by_weight) < 0) {
+            nextErrors.price_by_weight = 'El precio por peso no puede ser negativo';
+        }
+
         setErrors(nextErrors);
 
         return Object.keys(nextErrors).length === 0;
@@ -64,6 +76,14 @@ export function CarrierUnitFormModal({ carrierId, unitRecord = null, onSave, onC
                 roundQuantity(values.load_volume_capacity) ?? Number(values.load_volume_capacity),
             load_weight_capacity:
                 roundQuantity(values.load_weight_capacity) ?? Number(values.load_weight_capacity),
+            price_by_volume:
+                values.price_by_volume === ''
+                    ? null
+                    : roundQuantity(values.price_by_volume) ?? Number(values.price_by_volume),
+            price_by_weight:
+                values.price_by_weight === ''
+                    ? null
+                    : roundQuantity(values.price_by_weight) ?? Number(values.price_by_weight),
         };
 
         try {
@@ -122,6 +142,26 @@ export function CarrierUnitFormModal({ carrierId, unitRecord = null, onSave, onC
                     onChange={handleChange}
                     required
                     error={errors.load_weight_capacity}
+                />
+                <Input
+                    label="Precio por volumen (por m³)"
+                    name="price_by_volume"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={values.price_by_volume}
+                    onChange={handleChange}
+                    error={errors.price_by_volume}
+                />
+                <Input
+                    label="Precio por peso (por kg)"
+                    name="price_by_weight"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={values.price_by_weight}
+                    onChange={handleChange}
+                    error={errors.price_by_weight}
                 />
                 <div className="flex justify-end border-t border-slate-100 pt-4">
                     <SaveButton loading={loading} />

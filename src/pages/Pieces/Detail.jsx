@@ -1,22 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Button, Table, tableActionsColumn } from '@features/ui';
+import { AppModule, Button, DetailField, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
-import { formatCatalogCost, formatDate } from '@resources/helpers';
+import { formatCatalogCost, formatDate, formatQuantity } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
 import { pieceService, pieceMaterialService } from '@resources/services';
 import { PieceMaterialFormModal } from './PieceMaterialFormModal';
 import { FormModal } from './FormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function PieceDetail() {
     const sectionIcon = useSectionIcon();
@@ -146,6 +137,12 @@ export function PieceDetail() {
                     <>
                         <dl className="grid gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-3">
                             <DetailField label="ID">{piece.id}</DetailField>
+                            <DetailField label="Volumen (m³)">
+                                {piece.volume != null ? formatQuantity(piece.volume) : '—'}
+                            </DetailField>
+                            <DetailField label="Peso (kg)">
+                                {piece.weight != null ? formatQuantity(piece.weight) : '—'}
+                            </DetailField>
                             <DetailField label="Costo">{formatCatalogCost(piece.cost)}</DetailField>
                             <DetailField label="Creado">{formatDate(piece.created_at)}</DetailField>
                             <DetailField label="Actualizado">{formatDate(piece.updated_at)}</DetailField>

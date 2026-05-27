@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
 import { getEntityTypeLabel } from '@resources/constants/catalog';
+import { getMainImageUrl } from '@resources/helpers';
 import { useDatatable } from '@resources/hooks';
 import { entityService } from '@resources/services';
 import { FormModal } from './FormModal';
@@ -38,12 +39,15 @@ export function EntitiesPanel() {
         { title: 'ID', column: 'id', isSortable: true },
         {
             title: 'Imagen',
-            column: (row) =>
-                row.image ? (
-                    <img src={row.image} alt={row.name} className="h-10 w-10 rounded object-cover" />
+            column: (row) => {
+                const mainImageUrl = getMainImageUrl(row.images);
+
+                return mainImageUrl ? (
+                    <img src={mainImageUrl} alt={row.name} className="h-10 w-10 rounded object-cover" />
                 ) : (
                     <span className="text-slate-400">—</span>
-                ),
+                );
+            },
         },
         { title: 'Nombre', column: 'name', isSortable: true },
         { title: 'RFC', column: (row) => row.rfc || '—' },

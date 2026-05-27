@@ -15,3 +15,18 @@ alwaysApply: true
 
 - Apegarse a **clean code** y **SOLID**: responsabilidades claras, componentes y servicios pequeños, reutilizar helpers y UI existentes.
 - Cambios mínimos y enfocados en la tarea; no refactorizar módulos ajenos.
+
+## Nomenclatura
+
+- Es **crucial** que variables, funciones, métodos y props tengan nombres **explícitos** y coherentes con el dato que almacenan o retornan.
+- Preferir el término del dominio (`name`, `quantity`, `status`) sobre genéricos de UI (`label`, `text`, `data`) salvo que el valor sea realmente una etiqueta de formulario o copy de interfaz.
+- Si una función devuelve el nombre de una entidad (con fallback), llamarla `getPieceName`, no `getPieceLabel`.
+- No abreviar variables con siglas opacas (`op`, `po`, `ms`); usar el nombre del dominio (`orderPiece`, `productionOrder`).
+
+```javascript
+// ❌ Evitar
+function getPieceLabel(assignment) { /* retorna piece.name o fallback */ }
+
+// ✅ Preferir
+function getPieceName(assignment) { /* retorna piece.name o fallback */ }
+```

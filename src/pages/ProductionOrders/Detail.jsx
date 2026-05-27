@@ -1,22 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Badge, Button, Table, tableActionsColumn } from '@features/ui';
+import { AppModule, Badge, Button, DetailField, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
 import { getManufacturerOrderPieceStatusBadgeProps } from '@resources/constants/manufacturerOrderPieceStatus';
-import { formatCatalogCost, formatDate, formatQuantity } from '@resources/helpers';
+import { formatCatalogCost, formatDate, formatQuantity, getOrderConcept, getOrderPiece } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
 import { manufacturerOrderPieceService, productionOrderService } from '@resources/services';
 import { ManufacturerOrderPieceFormModal } from './ManufacturerOrderPieceFormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function ProductionOrderDetail() {
     const sectionIcon = useSectionIcon();
@@ -81,8 +72,8 @@ export function ProductionOrderDetail() {
     }
 
     async function handleDeletePiece(row) {
-        const pieceName =
-            row.order_piece?.piece?.name ?? row.orderPiece?.piece?.name ?? `pieza #${row.order_piece_id}`;
+        const orderPiece = getOrderPiece(row);
+        const pieceName = orderPiece?.piece?.name ?? `pieza #${row.order_piece_id}`;
 
         if (!(await confirm(`¿Quitar "${pieceName}" de esta orden?`, { danger: true }))) {
             return;
@@ -100,25 +91,21 @@ export function ProductionOrderDetail() {
         {
             title: 'Pedido',
             column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
+                const orderPiece = getOrderPiece(row);
 
-                return op?.order_id ?? op?.order?.id ?? '—';
+                return orderPiece?.order_id ?? orderPiece?.order?.id ?? '—';
             },
         },
         {
             title: 'Producto',
-            column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
-
-                return op?.order_concept?.product?.name ?? op?.orderConcept?.product?.name ?? '—';
-            },
+            column: (row) => getOrderConcept(getOrderPiece(row))?.product?.name ?? '—',
         },
         {
             title: 'Pieza',
             column: (row) => {
-                const op = row.order_piece ?? row.orderPiece;
+                const orderPiece = getOrderPiece(row);
 
-                return op?.piece?.name ?? `Pieza #${op?.piece_id ?? '—'}`;
+                return orderPiece?.piece?.name ?? `Pieza #${orderPiece?.piece_id ?? '—'}`;
             },
         },
         { title: 'Asignadas', column: 'quantity', isSortable: true },

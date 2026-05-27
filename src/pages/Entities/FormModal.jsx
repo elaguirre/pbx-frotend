@@ -1,26 +1,53 @@
-import { useState } from 'react';
-import { Modal, SaveButton, Input, Select } from '@features/ui';
+import { useEffect, useState } from 'react';
+import { Modal, SaveButton, Input, Select, FileInput } from '@features/ui';
 import { ENTITY_TYPES } from '@resources/constants/catalog';
-import { parseApiErrors } from '@resources/helpers';
+import { getMainImageUrl, parseApiErrors } from '@resources/helpers';
 import { entityService } from '@resources/services';
 
 const emptyValues = {
     id: null,
-    image: '',
     name: '',
     rfc: '',
     type: 'natural_person',
+    images: [],
 };
 
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     const [loading, setLoading] = useState(false);
     const [values, setValues] = useState({ ...emptyValues, ...formValues });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(() => getMainImageUrl(formValues.images));
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        return () => {
+            if (imagePreview?.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
 
     function handleChange(event) {
         const { name, value } = event.target;
         setValues((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleImageChange(event) {
+        const file = event.target.files?.[0] ?? null;
+
+        setImageFile(file);
+        setErrors((current) => ({ ...current, image: null }));
+
+        if (imagePreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(imagePreview);
+        }
+
+        if (file) {
+            setImagePreview(URL.createObjectURL(file));
+        } else {
+            setImagePreview(getMainImageUrl(values.images));
+        }
     }
 
     function validate() {
@@ -43,17 +70,19 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
 
         setLoading(true);
 
-        const payload = {
-            image: values.image?.trim() || null,
-            name: values.name.trim(),
-            rfc: values.rfc?.trim() || null,
-            type: values.type,
-        };
+        const formData = new FormData();
+        formData.append('name', values.name.trim());
+        formData.append('rfc', values.rfc?.trim() || '');
+        formData.append('type', values.type);
+
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
 
         try {
             const response = values.id
-                ? await entityService.update(values.id, payload)
-                : await entityService.store(payload);
+                ? await entityService.update(values.id, formData)
+                : await entityService.store(formData);
 
             onSave?.(response?.data ?? response);
             onClose?.();
@@ -89,13 +118,12 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     required
                     error={errors.type}
                 />
-                <Input
-                    label="Imagen (URL)"
+                <FileInput
+                    label="Imagen principal"
                     name="image"
-                    type="url"
-                    value={values.image}
-                    onChange={handleChange}
-                    placeholder="https://..."
+                    previewUrl={imagePreview}
+                    onChange={handleImageChange}
+                    hint="JPG, PNG o WebP. Máximo 5 MB."
                     error={errors.image}
                 />
                 <div className="flex justify-end border-t border-slate-100 pt-4">

@@ -14,3 +14,5 @@ export { formatCatalogCost } from './formatCatalogCost';
 export { formatDate, formatDateShort } from './formatDate';
 export { getConceptLineTotal, getOrderTotal } from './orderTotal';
 export { formatEntityAddressLine } from './entityAddress';
+export { getOrderConcept, getOrderPiece, getProductionOrder } from './relations';
+export { getMainImage, getMainImageUrl } from './images';

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Input, Modal, SaveButton, Select } from '@features/ui';
 import {
     formatQuantity,
+    getOrderConcept,
     normalizeListResponse,
     parseApiErrors,
     quantityToInputValue,
@@ -15,9 +16,9 @@ import {
     productionOrderService,
 } from '@resources/services';
 
-function orderPieceLabel(row) {
+function getOrderPieceOptionText(row) {
     const orderId = row.order_id ?? row.order?.id ?? '—';
-    const product = row.order_concept?.product?.name ?? row.orderConcept?.product?.name ?? '—';
+    const product = getOrderConcept(row)?.product?.name ?? '—';
     const piece = row.piece?.name ?? `Pieza #${row.piece_id}`;
     const status = row.order_piece_status?.name ?? row.orderPieceStatus?.name;
     const total = formatQuantity(row.quantity);
@@ -214,7 +215,7 @@ export function ManufacturerOrderPieceFormModal({
                 setOptions([
                     {
                         value: String(presetOrderPiece.id),
-                        label: orderPieceLabel(presetOrderPiece),
+                        label: getOrderPieceOptionText(presetOrderPiece),
                     },
                 ]);
             }
@@ -246,7 +247,7 @@ export function ManufacturerOrderPieceFormModal({
                     setOptions([
                         {
                             value: String(piece.id),
-                            label: orderPieceLabel(piece),
+                            label: getOrderPieceOptionText(piece),
                         },
                     ]);
 
@@ -269,7 +270,7 @@ export function ManufacturerOrderPieceFormModal({
                     setOptions([
                         {
                             value: String(presetOrderPiece.id),
-                            label: orderPieceLabel(presetOrderPiece),
+                            label: getOrderPieceOptionText(presetOrderPiece),
                         },
                     ]);
                 });
@@ -300,7 +301,7 @@ export function ManufacturerOrderPieceFormModal({
 
                     return {
                         value: String(row.id),
-                        label: orderPieceLabel(row),
+                        label: getOrderPieceOptionText(row),
                     };
                 });
 
@@ -466,7 +467,7 @@ export function ManufacturerOrderPieceFormModal({
                     error={errors.order_piece_id}
                 />
                 <Select
-                    label="Estado de la pieza para manufactura"
+                    label="Estado de la pieza para iniciar manufactura"
                     name="available_status_id"
                     value={values.available_status_id}
                     onChange={handleChange}
@@ -475,7 +476,7 @@ export function ManufacturerOrderPieceFormModal({
                     error={errors.available_status_id}
                 />
                 <Select
-                    label="Estado de la pieza al completar"
+                    label="Estado de la pieza al completar manufactura"
                     name="status_of_completed_pieces"
                     value={values.status_of_completed_pieces}
                     onChange={handleChange}

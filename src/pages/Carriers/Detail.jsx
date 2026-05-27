@@ -1,23 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Button, Table, Tabs, tableActionsColumn } from '@features/ui';
+import { AppModule, Button, DetailField, Table, Tabs, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
-import { formatDate, formatQuantity } from '@resources/helpers';
+import { formatDate, formatMoney, formatQuantity } from '@resources/helpers';
 import { useDatatable, useSectionIcon } from '@resources/hooks';
 import { carrierService, carrierUnitService, driverService } from '@resources/services';
 import { CarrierUnitFormModal } from './CarrierUnitFormModal';
 import { DriverFormModal } from './DriverFormModal';
 import { FormModal } from './FormModal';
-
-function DetailField({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-1 text-sm text-slate-900">{children}</dd>
-        </div>
-    );
-}
 
 export function CarrierDetail() {
     const sectionIcon = useSectionIcon();
@@ -135,6 +126,18 @@ export function CarrierDetail() {
         {
             title: 'Peso (kg)',
             column: (row) => formatQuantity(row.load_weight_capacity),
+            isSortable: true,
+        },
+        {
+            title: 'Precio por m³',
+            column: (row) =>
+                row.price_by_volume != null ? formatMoney(row.price_by_volume) : '—',
+            isSortable: true,
+        },
+        {
+            title: 'Precio por kg',
+            column: (row) =>
+                row.price_by_weight != null ? formatMoney(row.price_by_weight) : '—',
             isSortable: true,
         },
         tableActionsColumn({
