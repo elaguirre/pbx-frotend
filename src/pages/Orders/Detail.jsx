@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconUserPlus } from '@tabler/icons-react';
 import { AppModule, Badge, Button, DetailField, Table, Tabs, tableActionsColumn } from '@features/ui';
-import { getOrderStatusBadgeProps } from '@resources/constants/orders';
+import { getOrderStatusBadgeProps, isOrderStatusCanceled } from '@resources/constants/orders';
 import { formatDate, formatMoney, formatQuantity, getConceptLineTotal, getOrderTotal, getOrderConcept, normalizeListResponse } from '@resources/helpers';
 import { useSectionIcon } from '@resources/hooks';
 import { useAuth, useGlobalModals } from '@resources/contexts';
 import { orderPieceService, orderService } from '@resources/services';
 import { ManufacturerOrderPieceFormModal } from '@pages/ProductionOrders/ManufacturerOrderPieceFormModal';
+import { FormModal } from './FormModal';
 
 const ORDER_INCLUDES = 'client.entity,user,concepts.product';
 
@@ -59,6 +60,13 @@ export function OrderDetail() {
     useEffect(() => {
         loadOrderPieces();
     }, [loadOrderPieces]);
+
+    function openEditModal() {
+        showModal(<FormModal />, {
+            formValues: order,
+            onSave: () => orderService.get(id, { include: ORDER_INCLUDES }).then(setOrder),
+        });
+    }
 
     function openAssignModal(orderPiece) {
         const product = getOrderConcept(orderPiece)?.product;
@@ -229,6 +237,7 @@ export function OrderDetail() {
         <AppModule icon={sectionIcon}
             title={loading ? 'Cargando pedido…' : `Pedido #${order.id}`}
             description={loading ? '' : 'Detalle del pedido, conceptos y producción.'}
+            onEdit={userCan('orders.edit') && order ? openEditModal : undefined}
             toolbar={
                 <Button type="button" variant="secondary" onClick={() => navigate('/orders')}>
                     Volver a pedidos
@@ -245,6 +254,15 @@ export function OrderDetail() {
                             <DetailField label="Estado">
                                 <Badge {...getOrderStatusBadgeProps(order.status)} />
                             </DetailField>
+                            {isOrderStatusCanceled(order.status) && (
+                                <div className="sm:col-span-2">
+                                    <DetailField label="Motivo de cancelación">
+                                        <span className="whitespace-pre-wrap">
+                                            {order.cancellation_reason?.trim() || '—'}
+                                        </span>
+                                    </DetailField>
+                                </div>
+                            )}
                             <DetailField label="Creado por">
                                 {order.user?.full_name ?? '—'}
                             </DetailField>

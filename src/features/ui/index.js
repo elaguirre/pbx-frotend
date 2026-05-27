@@ -4,6 +4,7 @@ export { LoadingWrapper } from './LoadingWrapper';
 export { Button } from './Button';
 export { Input } from './form/Input';
 export { FileInput } from './form/FileInput';
+export { ImageInput } from './form/ImageInput';
 export { InputWrapper } from './form/InputWrapper';
 export { Textarea } from './form/Textarea';
 export { AppModule } from './AppModule';

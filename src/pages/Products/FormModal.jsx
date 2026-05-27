@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Modal, SaveButton, Input, Textarea, FileInput } from '@features/ui';
-import { getMainImageUrl, parseApiErrors } from '@resources/helpers';
+import { useState } from 'react';
+import { Modal, SaveButton, Input, Textarea, ImageInput } from '@features/ui';
+import { parseApiErrors } from '@resources/helpers';
 import { productService } from '@resources/services';
 
 const emptyValues = {
@@ -15,17 +15,8 @@ const emptyValues = {
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     const [loading, setLoading] = useState(false);
     const [values, setValues] = useState({ ...emptyValues, ...formValues });
-    const [imageFile, setImageFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(() => getMainImageUrl(formValues.images));
+    const [imageState, setImageState] = useState({ file: null, removeImage: false });
     const [errors, setErrors] = useState({});
-
-    useEffect(() => {
-        return () => {
-            if (imagePreview?.startsWith('blob:')) {
-                URL.revokeObjectURL(imagePreview);
-            }
-        };
-    }, [imagePreview]);
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -33,21 +24,9 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         setErrors((current) => ({ ...current, [name]: null }));
     }
 
-    function handleImageChange(event) {
-        const file = event.target.files?.[0] ?? null;
-
-        setImageFile(file);
+    function handleImageChange(nextImageState) {
+        setImageState(nextImageState);
         setErrors((current) => ({ ...current, image: null }));
-
-        if (imagePreview?.startsWith('blob:')) {
-            URL.revokeObjectURL(imagePreview);
-        }
-
-        if (file) {
-            setImagePreview(URL.createObjectURL(file));
-        } else {
-            setImagePreview(getMainImageUrl(values.images));
-        }
     }
 
     function validate() {
@@ -77,8 +56,12 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         formData.append('price', String(Number(values.price)));
         formData.append('details', values.details?.trim() || '');
 
-        if (imageFile) {
-            formData.append('image', imageFile);
+        if (imageState.file) {
+            formData.append('image', imageState.file);
+        }
+
+        if (imageState.removeImage) {
+            formData.append('remove_image', '1');
         }
 
         try {
@@ -102,6 +85,12 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     return (
         <Modal {...params} title={values.id ? 'Editar producto' : 'Crear producto'} onClose={onClose}>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                <ImageInput
+                    label="Imagen"
+                    images={values.images}
+                    onChange={handleImageChange}
+                    error={errors.image}
+                />
                 <Input
                     label="Nombre"
                     name="name"
@@ -131,15 +120,6 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                         error={errors.price}
                     />
                 </div>
-
-                <FileInput
-                    label="Imagen principal"
-                    name="image"
-                    previewUrl={imagePreview}
-                    onChange={handleImageChange}
-                    hint="JPG, PNG o WebP. Máximo 5 MB."
-                    error={errors.image}
-                />
 
                 <Textarea
                     label="Detalles"

@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { IconPencil, IconX } from '@tabler/icons-react';
 import { Button, Icon, Modal } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
-import { formatMoney, formatQuantity, getOrderTotal } from '@resources/helpers';
+import {
+    canCheckoutOrder,
+    formatMoney,
+    formatQuantity,
+    getConceptsWithProductsMissingPieces,
+    getOrderTotal,
+    getProductPiecesCount,
+} from '@resources/helpers';
 import { useAppStore } from '@resources/store';
 import { orderConceptService } from '@resources/services';
 import { OrderConceptFormModal } from './OrderConceptFormModal';
@@ -24,6 +31,11 @@ export function CartModal({ onClose, ...params }) {
     const clientName = currentOrder?.client?.entity?.name ?? '—';
 
     const orderTotal = useMemo(() => getOrderTotal(concepts), [concepts]);
+    const conceptsMissingPieces = useMemo(
+        () => getConceptsWithProductsMissingPieces(concepts),
+        [concepts],
+    );
+    const checkoutAllowed = canCheckoutOrder(concepts);
 
     async function refreshOrder() {
         await fetchCurrentOrder();
@@ -57,6 +69,21 @@ export function CartModal({ onClose, ...params }) {
     }
 
     async function handleCheckout() {
+        if (!checkoutAllowed) {
+            const names = conceptsMissingPieces
+                .map((concept) => concept.product?.name ?? `Producto #${concept.product_id}`)
+                .join(', ');
+
+            await alert(
+                names
+                    ? `No se puede cerrar el pedido. Los siguientes productos no tienen piezas en catálogo: ${names}.`
+                    : 'No se puede cerrar el pedido.',
+                { title: 'Piezas requeridas' },
+            );
+
+            return;
+        }
+
         if (!(await confirm('¿Cerrar este pedido? Quedará en estado "En proceso".'))) {
             return;
         }
@@ -110,6 +137,12 @@ export function CartModal({ onClose, ...params }) {
                                     {concept.details && (
                                         <p className="mt-1 text-xs text-slate-500">{concept.details}</p>
                                     )}
+                                    {getProductPiecesCount(concept.product) < 1 && (
+                                        <p className="mt-1 text-xs font-medium text-danger-700">
+                                            Sin piezas en catálogo; no se puede cerrar el pedido hasta
+                                            asignarlas en el producto.
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1">
                                     {userCan('order_concepts.edit') && (
@@ -148,13 +181,23 @@ export function CartModal({ onClose, ...params }) {
                     </div>
                 )}
 
+                {conceptsMissingPieces.length > 0 && (
+                    <p className="rounded-lg border border-danger-200 bg-danger-50 p-3 text-sm text-danger-800">
+                        No se puede cerrar el pedido: hay productos sin piezas en catálogo (
+                        {conceptsMissingPieces
+                            .map((concept) => concept.product?.name ?? `Producto #${concept.product_id}`)
+                            .join(', ')}
+                        ).
+                    </p>
+                )}
+
                 {userCan('orders.checkout') && (
                     <div className="flex justify-end border-t border-slate-100 pt-4">
                         <Button
                             type="button"
                             onClick={handleCheckout}
                             loading={checkoutLoading}
-                            disabled={concepts.length === 0}
+                            disabled={!checkoutAllowed}
                         >
                             Cerrar pedido
                         </Button>

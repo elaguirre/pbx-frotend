@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Modal, SaveButton, Input, Select, FileInput } from '@features/ui';
+import { useState } from 'react';
+import { Modal, SaveButton, Input, Select, ImageInput } from '@features/ui';
 import { ENTITY_TYPES } from '@resources/constants/catalog';
-import { getMainImageUrl, parseApiErrors } from '@resources/helpers';
+import { parseApiErrors } from '@resources/helpers';
 import { entityService } from '@resources/services';
 
 const emptyValues = {
@@ -15,17 +15,8 @@ const emptyValues = {
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     const [loading, setLoading] = useState(false);
     const [values, setValues] = useState({ ...emptyValues, ...formValues });
-    const [imageFile, setImageFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(() => getMainImageUrl(formValues.images));
+    const [imageState, setImageState] = useState({ file: null, removeImage: false });
     const [errors, setErrors] = useState({});
-
-    useEffect(() => {
-        return () => {
-            if (imagePreview?.startsWith('blob:')) {
-                URL.revokeObjectURL(imagePreview);
-            }
-        };
-    }, [imagePreview]);
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -33,21 +24,9 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         setErrors((current) => ({ ...current, [name]: null }));
     }
 
-    function handleImageChange(event) {
-        const file = event.target.files?.[0] ?? null;
-
-        setImageFile(file);
+    function handleImageChange(nextImageState) {
+        setImageState(nextImageState);
         setErrors((current) => ({ ...current, image: null }));
-
-        if (imagePreview?.startsWith('blob:')) {
-            URL.revokeObjectURL(imagePreview);
-        }
-
-        if (file) {
-            setImagePreview(URL.createObjectURL(file));
-        } else {
-            setImagePreview(getMainImageUrl(values.images));
-        }
     }
 
     function validate() {
@@ -75,8 +54,12 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         formData.append('rfc', values.rfc?.trim() || '');
         formData.append('type', values.type);
 
-        if (imageFile) {
-            formData.append('image', imageFile);
+        if (imageState.file) {
+            formData.append('image', imageState.file);
+        }
+
+        if (imageState.removeImage) {
+            formData.append('remove_image', '1');
         }
 
         try {
@@ -100,6 +83,12 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
     return (
         <Modal {...params} title={values.id ? 'Editar entidad' : 'Crear entidad'} onClose={onClose}>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                <ImageInput
+                    label="Imagen"
+                    images={values.images}
+                    onChange={handleImageChange}
+                    error={errors.image}
+                />
                 <Input
                     label="Nombre"
                     name="name"
@@ -117,14 +106,6 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     options={ENTITY_TYPES}
                     required
                     error={errors.type}
-                />
-                <FileInput
-                    label="Imagen principal"
-                    name="image"
-                    previewUrl={imagePreview}
-                    onChange={handleImageChange}
-                    hint="JPG, PNG o WebP. Máximo 5 MB."
-                    error={errors.image}
                 />
                 <div className="flex justify-end border-t border-slate-100 pt-4">
                     <SaveButton loading={loading} />

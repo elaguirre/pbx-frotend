@@ -36,19 +36,19 @@ export function EntitiesPanel() {
     const hasRowActions = userCan('entities.edit') || userCan('entities.delete');
 
     const columns = [
-        { title: 'ID', column: 'id', isSortable: true },
         {
             title: 'Imagen',
             column: (row) => {
                 const mainImageUrl = getMainImageUrl(row.images);
 
                 return mainImageUrl ? (
-                    <img src={mainImageUrl} alt={row.name} className="h-10 w-10 rounded object-cover" />
+                    <img src={mainImageUrl} alt={row.name} className="h-auto w-16 rounded object-contain" />
                 ) : (
                     <span className="text-slate-400">—</span>
                 );
             },
         },
+        { title: 'ID', column: 'id', isSortable: true },
         { title: 'Nombre', column: 'name', isSortable: true },
         { title: 'RFC', column: (row) => row.rfc || '—' },
         { title: 'Tipo', column: (row) => getEntityTypeLabel(row.type) },

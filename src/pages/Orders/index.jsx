@@ -1,3 +1,4 @@
+import { IconPencil } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { AppModule, Badge, Button, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useGlobalModals } from '@resources/contexts';
@@ -6,6 +7,7 @@ import { formatDate } from '@resources/helpers';
 import { useDatatable } from '@resources/hooks';
 import { getMenuIconByLink } from '@resources/menu';
 import { orderService } from '@resources/services';
+import { FormModal } from './FormModal';
 import { StartOrderModal } from './StartOrderModal';
 
 export function Orders() {
@@ -26,6 +28,13 @@ export function Orders() {
         });
     }
 
+    function openEditModal(row) {
+        showModal(<FormModal />, {
+            formValues: row,
+            onSave: updateList,
+        });
+    }
+
     const columns = [
         { title: 'ID', column: 'id', isSortable: true },
         { title: 'Cliente', column: (row) => row.client?.entity?.name ?? '—' },
@@ -35,11 +44,17 @@ export function Orders() {
             column: (row) => <Badge {...getOrderStatusBadgeProps(row.status)} />,
         },
         { title: 'Creado', column: (row) => formatDate(row.created_at), isSortable: true },
-        ...(userCan('orders.view')
+        ...((userCan('orders.view') || userCan('orders.edit'))
             ? [
                   tableActionsColumn({
-                      title: '',
-                      actions: [],
+                      actions: [
+                          {
+                              label: 'Editar',
+                              icon: IconPencil,
+                              show: userCan('orders.edit'),
+                              onClick: (row) => openEditModal(row),
+                          },
+                      ],
                   }),
               ]
             : []),
