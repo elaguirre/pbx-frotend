@@ -37,7 +37,7 @@ export function ProductionOrderDetail() {
         setLoadingOrder(true);
 
         productionOrderService
-            .get(id, { include: 'manufacturer.entity' })
+            .get(id, { include: 'manufacturer.entity,productionBatch' })
             .then(setProductionOrder)
             .catch(() => setProductionOrder(null))
             .finally(() => setLoadingOrder(false));
@@ -84,7 +84,18 @@ export function ProductionOrderDetail() {
     }
 
     const manufacturerId = productionOrder?.manufacturer_id;
-    const backPath = manufacturerId ? `/manufacturers/${manufacturerId}` : '/manufacturers';
+    const productionBatchId =
+        productionOrder?.production_batch_id ?? productionOrder?.productionBatch?.id;
+    const backPath = productionBatchId
+        ? `/production-batches/${productionBatchId}`
+        : manufacturerId
+          ? `/manufacturers/${manufacturerId}`
+          : '/manufacturers';
+    const backLabel = productionBatchId
+        ? 'Volver al lote'
+        : manufacturerId
+          ? 'Volver al maquilador'
+          : 'Volver a maquiladores';
 
     const pieceColumns = [
         { title: 'ID', column: 'id', isSortable: true },
@@ -151,7 +162,7 @@ export function ProductionOrderDetail() {
                 description="La orden de producción solicitada no existe o no tiene permiso para verla."
                 toolbar={
                     <Button type="button" variant="secondary" onClick={() => navigate(backPath)}>
-                        Volver al maquilador
+                        {backLabel}
                     </Button>
                 }
             />
@@ -168,7 +179,7 @@ export function ProductionOrderDetail() {
             }
             toolbar={
                 <Button type="button" variant="secondary" onClick={() => navigate(backPath)}>
-                    Volver al maquilador
+                    {backLabel}
                 </Button>
             }
         >

@@ -234,7 +234,7 @@ export function ManufacturerOrderPieceDetail() {
                             </DetailField>
                             
                             <DetailField label="Pieza">
-                                {getPieceName(assignment)}
+                                {formatQuantity(assignment.quantity)} x {getPieceName(assignment)}
                             </DetailField>
                             
                             <DetailField label="Pedido">
@@ -244,11 +244,7 @@ export function ManufacturerOrderPieceDetail() {
                             <DetailField label="Producto">
                                 {orderConcept?.product?.name ?? '—'}
                             </DetailField>
-                            
-                            <DetailField label="Cantidad asignada">
-                                {formatQuantity(assignment.quantity)}
-                            </DetailField>
-                            
+                                                        
                             <DetailField label="Piezas terminadas">
                                 {formatQuantity(finishedQuantity)} de {formatQuantity(assignment.quantity)}
                             </DetailField>

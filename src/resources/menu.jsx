@@ -6,10 +6,13 @@ import {
     IconTruckDelivery,
     IconBuildingStore,
     IconBuildingFactory,
+    IconTools,
     IconStar,
     IconSettings,
     IconCheckupList,
     IconUser,
+    IconLayersIntersect,
+    IconBuildingFactory2,
 } from '@tabler/icons-react';
 import { Products } from '@pages/Products';
 import { Pieces } from '@pages/Pieces';
@@ -20,6 +23,7 @@ import { Carriers } from '@pages/Carriers';
 import { Shipments } from '@pages/Shipments';
 import { Clients } from '@pages/Clients';
 import { Orders } from '@pages/Orders';
+import { ProductionBatches } from '@pages/ProductionBatches';
 import { Settings } from '@pages/Settings';
 
 /** Orden y etiquetas de los grupos del menú lateral (`group` en cada ítem). */
@@ -48,9 +52,17 @@ export const menuOptions = [
         element: <Clients />,
     },
     {
+        label: 'Producción',
+        link: '/production-batches',
+        icon: IconBuildingFactory2,
+        group: 'operations',
+        permission: 'production_batches.view',
+        element: <ProductionBatches />,
+    },
+    {
         label: 'Maquiladores',
         link: '/manufacturers',
-        icon: IconBuildingFactory,
+        icon: IconTools,
         group: 'operations',
         permission: 'manufacturers.view',
         element: <Manufacturers />,
@@ -145,6 +157,7 @@ export function getDefaultAppPath(userCan) {
 
 /** Rutas de detalle sin entrada directa en el menú lateral. */
 const detailSectionIcons = {
+    'production-batches': IconLayersIntersect,
     'production-orders': IconBuildingFactory,
     'manufacturer-order-pieces': IconBuildingFactory,
     'material-suppliers': IconBuildingStore,

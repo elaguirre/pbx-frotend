@@ -19,6 +19,7 @@ export { orderService } from './order.service';
 export { orderConceptService } from './orderConcept.service';
 export { orderPieceService } from './orderPiece.service';
 export { orderPieceStatusService } from './orderPieceStatus.service';
+export { productionBatchService } from './productionBatch.service';
 export { productionOrderService } from './productionOrder.service';
 export { manufacturerPieceCostService } from './manufacturerPieceCost.service';
 export { manufacturerOrderPieceService } from './manufacturerOrderPiece.service';

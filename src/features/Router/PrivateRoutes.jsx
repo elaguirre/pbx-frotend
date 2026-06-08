@@ -9,6 +9,7 @@ import { MaterialDetail } from '@pages/Materials/Detail';
 import { SupplierDetail } from '@pages/Suppliers/Detail';
 import { MaterialSupplierDetail } from '@pages/MaterialSuppliers/Detail';
 import { ManufacturerDetail } from '@pages/Manufacturers/Detail';
+import { ProductionBatchDetail } from '@pages/ProductionBatches/Detail';
 import { ProductionOrderDetail } from '@pages/ProductionOrders/Detail';
 import { ManufacturerOrderPieceDetail } from '@pages/ProductionOrders/ManufacturerOrderPieceDetail';
 import { EntityDetail } from '@pages/Entities/Detail';
@@ -58,6 +59,9 @@ export function PrivateRoutes() {
                 )}
                 {userCan('manufacturers.view') && (
                     <Route path="manufacturers/:id" element={<ManufacturerDetail />} />
+                )}
+                {userCan('production_batches.view') && (
+                    <Route path="production-batches/:id" element={<ProductionBatchDetail />} />
                 )}
                 {(userCan('production_orders.view') || userCan('manufacturer_order_pieces.view')) && (
                     <Route path="production-orders/:id" element={<ProductionOrderDetail />} />
