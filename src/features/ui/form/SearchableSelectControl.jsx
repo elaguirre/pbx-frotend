@@ -25,7 +25,7 @@ export function SearchableSelectControl({
     const classNames = getSelectClassNames({ error: Boolean(error), disabled });
 
     return (
-        <div className="relative">
+        <div className="relative w-full">
             <ReactSelect
                 unstyled
                 inputId={inputId}
