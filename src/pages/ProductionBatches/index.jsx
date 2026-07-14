@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconTrash } from '@tabler/icons-react';
-import { AppModule, Button, Table, tableActionsColumn } from '@features/ui';
+import { AppModule, Button, CompletionProgressBar, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm } from '@resources/contexts';
 import { formatDate } from '@resources/helpers';
 import { useDatatable } from '@resources/hooks';
@@ -52,6 +52,15 @@ export function ProductionBatches() {
         {
             title: 'Órdenes de producción',
             column: (row) => row.production_orders_count ?? 0,
+        },
+        {
+            title: 'Avance',
+            column: (row) => (
+                <CompletionProgressBar
+                    percent={row.completion_progress?.percent}
+                    progress={row.completion_progress}
+                />
+            ),
         },
         tableActionsColumn({
             actions: [

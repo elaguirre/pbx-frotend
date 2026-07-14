@@ -30,6 +30,7 @@ import { Settings } from '@pages/Settings';
 export const menuGroups = [
     { id: 'operations', label: 'Operación' },
     { id: 'content', label: 'Contenido' },
+    { id: 'entities', label: 'Entidades' },
     { id: 'system', label: 'Sistema' },
 ];
 
@@ -44,36 +45,12 @@ export const menuOptions = [
         element: <Orders />,
     },
     {
-        label: 'Clientes',
-        link: '/clients',
-        icon: IconStar,
-        group: 'operations',
-        permission: 'clients.view',
-        element: <Clients />,
-    },
-    {
         label: 'Producción',
         link: '/production-batches',
         icon: IconBuildingFactory2,
         group: 'operations',
         permission: 'production_batches.view',
         element: <ProductionBatches />,
-    },
-    {
-        label: 'Maquiladores',
-        link: '/manufacturers',
-        icon: IconTools,
-        group: 'operations',
-        permission: 'manufacturers.view',
-        element: <Manufacturers />,
-    },
-    {
-        label: 'Transportistas',
-        link: '/carriers',
-        icon: IconTruck,
-        group: 'operations',
-        permission: 'carriers.view',
-        element: <Carriers />,
     },
     {
         label: 'Embarques',
@@ -109,11 +86,37 @@ export const menuOptions = [
         permission: 'materials.view',
         element: <Materials />,
     },
+    
+    // Entidades
+    {
+        label: 'Clientes',
+        link: '/clients',
+        icon: IconStar,
+        group: 'entities',
+        permission: 'clients.view',
+        element: <Clients />,
+    },
+    {
+        label: 'Maquiladores',
+        link: '/manufacturers',
+        icon: IconTools,
+        group: 'entities',
+        permission: 'manufacturers.view',
+        element: <Manufacturers />,
+    },
+    {
+        label: 'Transportistas',
+        link: '/carriers',
+        icon: IconTruck,
+        group: 'entities',
+        permission: 'carriers.view',
+        element: <Carriers />,
+    },
     {
         label: 'Proveedores',
         link: '/suppliers',
         icon: IconBuildingStore,
-        group: 'content',
+        group: 'entities',
         permission: 'suppliers.view',
         element: <Suppliers />,
     },

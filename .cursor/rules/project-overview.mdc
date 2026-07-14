@@ -22,7 +22,9 @@ Solo código de este repositorio (`pbx-front`). No documentar Laravel, migracion
 
 ## Dependencias
 
-- Instalar y gestionar paquetes siempre con **pnpm** (`pnpm add`, `pnpm install`, `pnpm remove`, etc.). No usar `npm` ni `npx`.
+- **Solo pnpm** para instalar, actualizar o quitar paquetes y para ejecutar scripts (`pnpm add`, `pnpm install`, `pnpm remove`, `pnpm run`, etc.).
+- **No usar npm ni npx** en este repositorio: mezclar gestores provoca lockfiles duplicados (`package-lock.json`), versiones resueltas distintas y errores difíciles de reproducir. Usar `pnpm dlx` en lugar de `npx` para binarios puntuales.
+- Lockfile canónico: `pnpm-lock.yaml`. No generar ni commitear `package-lock.json`.
 - Íconos: `@tabler/icons-react` + componente `Icon` en `@features/ui`. Ver regla `icons.mdc`.
 
 ## Estructura

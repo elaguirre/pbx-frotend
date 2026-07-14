@@ -51,16 +51,14 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
 
     function handleEntityCreated(record) {
         applySelectPlusRecord({
-            options: entities,
             onOptionsChange: setEntities,
             record,
             mapToOption: (entity) => ({
                 value: String(entity.id),
                 label: entity.name,
             }),
-            onSelect: (entityId) => {
-                setValues((current) => ({ ...current, entity_id: entityId }));
-            },
+            onChange: handleChange,
+            name: 'entity_id',
         });
         setErrors((current) => ({ ...current, entity_id: null }));
     }

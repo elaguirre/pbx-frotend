@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, SaveButton, Select } from '@features/ui';
-import { normalizeListResponse, parseApiErrors } from '@resources/helpers';
+import { applySelectPlusRecord, Modal, SaveButton, SelectPlus } from '@features/ui';
 import { useAuth, useGlobalModals } from '@resources/contexts';
-import { driverService, shipmentDriverService } from '@resources/services';
+import { normalizeListResponse, parseApiErrors } from '@resources/helpers';
 import { DriverFormModal } from '@pages/Carriers/DriverFormModal';
+import { driverService, shipmentDriverService } from '@resources/services';
 
 export function ShipmentDriverFormModal({
     shipmentId,
@@ -50,16 +50,31 @@ export function ShipmentDriverFormModal({
         loadDrivers();
     }, [carrierId]);
 
+    function handleDriverChange(event) {
+        setDriverId(event.target.value);
+        setErrors({});
+    }
+
+    function handleDriverCreated(record) {
+        const driver = record?.data ?? record;
+
+        applySelectPlusRecord({
+            onOptionsChange: setDrivers,
+            record: driver,
+            mapToOption: (row) => ({
+                value: String(row.id),
+                label: row.entity?.name ?? `Conductor #${row.id}`,
+            }),
+            onChange: handleDriverChange,
+            name: 'driver_id',
+        });
+        setErrors({});
+    }
+
     function openDriverModal() {
         showModal(<DriverFormModal />, {
             carrierId,
-            onSave: async (driver) => {
-                await loadDrivers();
-
-                if (driver?.id) {
-                    setDriverId(String(driver.id));
-                }
-            },
+            onSave: handleDriverCreated,
         });
     }
 
@@ -96,24 +111,19 @@ export function ShipmentDriverFormModal({
     return (
         <Modal {...params} title="Asignar conductor al embarque" onClose={onClose}>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                <Select
+                <SelectPlus
                     label="Conductor"
                     name="driver_id"
                     value={driverId}
-                    onChange={(event) => {
-                        setDriverId(event.target.value);
-                        setErrors({});
-                    }}
+                    onChange={handleDriverChange}
                     options={drivers}
                     required
                     disabled={!carrierId}
                     error={errors.driver_id}
+                    showAdd={Boolean(carrierId) && userCan('drivers.add')}
+                    addLabel="Nuevo conductor"
+                    onAddClick={openDriverModal}
                 />
-                {carrierId && userCan('drivers.add') && (
-                    <Button type="button" variant="secondary" onClick={openDriverModal}>
-                        + Registrar conductor
-                    </Button>
-                )}
                 <div className="flex justify-end border-t border-slate-100 pt-4">
                     <SaveButton loading={loading} />
                 </div>

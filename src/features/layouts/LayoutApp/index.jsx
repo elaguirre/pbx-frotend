@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import { useAuth, useGlobalModals } from '@resources/contexts';
 import { useConfig } from '@resources/contexts';
-import { formatMoney, getOrderTotal } from '@resources/helpers';
+import { formatMoney, getOrderTotal, getTenantId } from '@resources/helpers';
 import { Button, Icon } from '@features/ui';
 import { getVisibleMenuGroups } from '@resources/menu';
 import { useAppStore } from '@resources/store';
@@ -28,13 +28,18 @@ export function LayoutApp() {
     const orderConcepts = currentOrder?.concepts ?? [];
     const orderConceptCount = orderConcepts.length;
     const orderTotal = getOrderTotal(orderConcepts);
+    const tenantName = getConfig('site.name', getTenantId());
 
     return (
         <div className="flex min-h-full">
             <aside className="w-64 shrink-0 border-r border-slate-200 bg-white">
-                <div className="border-b border-slate-200 p-4">
-                    <p className="text-lg font-semibold">{getConfig('app.title', import.meta.env.VITE_APP_TITLE)}</p>
-                    <p className="text-xs text-slate-500">{user?.full_name}</p>
+                <div className="flex h-16 min-w-0 flex-col justify-center px-4">
+                    <p className="truncate text-lg font-semibold text-primary-700" title={tenantName}>
+                        {tenantName}
+                    </p>
+                    <p className="truncate text-xs text-slate-500" title={user?.full_name}>
+                        {user?.full_name}
+                    </p>
                 </div>
                 <nav className="flex flex-col gap-1 p-4">
                     {menuGroups.map((group, groupIndex) => (
@@ -44,9 +49,9 @@ export function LayoutApp() {
                                 groupIndex > 0 ? 'mt-4 border-t border-slate-200 pt-4' : undefined,
                             )}
                         >
-                            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            <div className="pb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                                 {group.label}
-                            </p>
+                            </div>
                             <div className="flex flex-col gap-1">
                                 {group.items.map((item) => (
                                     <NavLink
@@ -82,7 +87,7 @@ export function LayoutApp() {
             </aside>
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <header className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-6 py-3">
+                <header className="flex items-center justify-end gap-3 border-b border-slate-200 bg-white px-6 h-16">
                     {userCan('orders.view') && (
                         <Button
                             variant="secondary"

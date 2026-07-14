@@ -8,7 +8,9 @@
 - Follow the existing project structure and naming conventions.
 
 ## Dependencies
-- Always use **pnpm** to install or manage packages (`pnpm add`, `pnpm install`, `pnpm remove`, etc.). Do not use `npm` or `npx` for dependency installation.
+- **Solo pnpm** para gestionar dependencias y ejecutar scripts del proyecto (`pnpm add`, `pnpm install`, `pnpm remove`, `pnpm run`, etc.).
+- **No usar npm ni npx** bajo ninguna circunstancia: mezclar gestores genera `package-lock.json`, resoluciones distintas y builds inconsistentes. Usar `pnpm dlx` en lugar de `npx` cuando haga falta ejecutar un binario puntual.
+- El lockfile canónico es `pnpm-lock.yaml`; no crear ni commitear `package-lock.json`.
 - Icons: **@tabler/icons-react** via the `Icon` wrapper in `src/features/ui/Icon`.
 
 ## Components

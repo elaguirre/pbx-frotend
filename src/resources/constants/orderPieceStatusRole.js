@@ -1,6 +1,7 @@
 export const ORDER_PIECE_STATUS_ROLES = [
     { value: '', label: 'Sin rol' },
     { value: 'initial', label: 'Inicial (al cerrar pedido)' },
+    { value: 'packable', label: 'Empaquetable (avance de producción)' },
     { value: 'shippable', label: 'Embarcable' },
 ];
 

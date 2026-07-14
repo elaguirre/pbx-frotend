@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AppModule, Badge, Button, DetailField, Table, tableActionsColumn } from '@features/ui';
+import { IconArrowRight } from '@tabler/icons-react';
+import { AppModule, Badge, Button, DetailField, Icon, Table, tableActionsColumn } from '@features/ui';
 import { useAuth, useGlobalModals } from '@resources/contexts';
 import { getManufacturerOrderPieceStatusBadgeProps } from '@resources/constants/manufacturerOrderPieceStatus';
 import { getOrderPieceStatusBadgeProps } from '@resources/constants/orderPieceStatusBadge';
@@ -13,6 +14,12 @@ const ORDER_PIECE_INCLUDES = 'piece,orderConcept.product,order.client.entity,ord
 
 const ASSIGNMENTS_INCLUDES =
     'productionOrder.manufacturer.entity,availableStatus,statusOfCompletedPieces';
+
+function getAssignmentOrderPieceStatus(assignment, snakeKey, camelKey) {
+    const status = assignment?.[snakeKey] ?? assignment?.[camelKey];
+
+    return status && typeof status === 'object' ? status : null;
+}
 
 export function OrderPieceDetail() {
     const sectionIcon = useSectionIcon();
@@ -145,6 +152,34 @@ export function OrderPieceDetail() {
         {
             title: 'Piezas terminadas',
             column: (row) => formatQuantity(row.finished_quantity ?? 0),
+        },
+        {
+            title: 'Estado de la pieza',
+            column: (row) => {
+                const availableStatus = getAssignmentOrderPieceStatus(
+                    row,
+                    'available_status',
+                    'availableStatus',
+                );
+                const completedStatus = getAssignmentOrderPieceStatus(
+                    row,
+                    'status_of_completed_pieces',
+                    'statusOfCompletedPieces',
+                );
+
+                return (
+                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                        <Badge {...getOrderPieceStatusBadgeProps(availableStatus)} />
+                        <Icon
+                            icon={IconArrowRight}
+                            size="sm"
+                            className="shrink-0 text-slate-400"
+                            aria-hidden
+                        />
+                        <Badge {...getOrderPieceStatusBadgeProps(completedStatus)} />
+                    </span>
+                );
+            },
         },
         {
             title: 'Estado de manufactura',

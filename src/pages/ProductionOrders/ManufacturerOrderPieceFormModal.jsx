@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, SaveButton, Select } from '@features/ui';
+import { applySelectPlusRecord, Button, Input, Modal, SaveButton, Select, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import {
     formatQuantity,
     getOrderConcept,
@@ -8,6 +9,7 @@ import {
     quantityToInputValue,
     roundQuantity,
 } from '@resources/helpers';
+import { FormModal as ManufacturerFormModal } from '@pages/Manufacturers/FormModal';
 import {
     manufacturerOrderPieceService,
     manufacturerService,
@@ -109,6 +111,8 @@ export function ManufacturerOrderPieceFormModal({
     const lockOrderPiece = Boolean(presetOrderPiece?.id) && !isEdit;
     const needsManufacturer = !isEdit && !initialProductionOrderId;
 
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const [loading, setLoading] = useState(false);
     const [manufacturerOptions, setManufacturerOptions] = useState([]);
     const [orderPiecesById, setOrderPiecesById] = useState({});
@@ -344,6 +348,33 @@ export function ManufacturerOrderPieceFormModal({
         setErrors((current) => ({ ...current, order_piece_id: null, quantity: null }));
     }
 
+    function handleManufacturerChange(event) {
+        setManufacturerId(event.target.value);
+        setErrors((current) => ({ ...current, manufacturer_id: null }));
+    }
+
+    function handleManufacturerCreated(record) {
+        const manufacturer = record?.data ?? record;
+
+        applySelectPlusRecord({
+            onOptionsChange: setManufacturerOptions,
+            record: manufacturer,
+            mapToOption: (row) => ({
+                value: String(row.id),
+                label: row.entity?.name ?? `Maquilador #${row.id}`,
+            }),
+            onChange: handleManufacturerChange,
+            name: 'manufacturer_id',
+        });
+        setErrors((current) => ({ ...current, manufacturer_id: null }));
+    }
+
+    function openManufacturerModal() {
+        showModal(<ManufacturerFormModal />, {
+            onSave: handleManufacturerCreated,
+        });
+    }
+
     function validate() {
         const nextErrors = {};
         const orderPiece = orderPiecesById[values.order_piece_id];
@@ -443,17 +474,17 @@ export function ManufacturerOrderPieceFormModal({
         >
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 {needsManufacturer && (
-                    <Select
+                    <SelectPlus
                         label="Maquilador"
                         name="manufacturer_id"
                         value={manufacturerId}
-                        onChange={(event) => {
-                            setManufacturerId(event.target.value);
-                            setErrors((current) => ({ ...current, manufacturer_id: null }));
-                        }}
+                        onChange={handleManufacturerChange}
                         options={manufacturerOptions}
                         required
                         error={errors.manufacturer_id}
+                        showAdd={userCan('manufacturers.add')}
+                        addLabel="Nuevo maquilador"
+                        onAddClick={openManufacturerModal}
                     />
                 )}
                 <Select

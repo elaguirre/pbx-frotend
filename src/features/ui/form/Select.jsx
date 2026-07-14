@@ -1,4 +1,5 @@
 import { InputWrapper } from './InputWrapper';
+import { SearchableSelectControl } from './SearchableSelectControl';
 
 export function Select({
     label,
@@ -10,24 +11,24 @@ export function Select({
     required = false,
     disabled = false,
     error = null,
+    isMulti = false,
 }) {
+    const inputId = name;
+
     return (
-        <InputWrapper label={label} error={error} required={required}>
-            <select
+        <InputWrapper label={label} error={error}>
+            <SearchableSelectControl
+                inputId={inputId}
                 name={name}
-                value={value ?? ''}
+                value={value}
                 onChange={onChange}
+                options={options}
+                placeholder={placeholder}
                 required={required}
                 disabled={disabled}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-primary-500 focus:border-primary-500 focus:ring-2 disabled:bg-slate-100"
-            >
-                <option value="">{placeholder}</option>
-                {options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                        {option.label}
-                    </option>
-                ))}
-            </select>
+                error={error}
+                isMulti={isMulti}
+            />
         </InputWrapper>
     );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, SaveButton, Select } from '@features/ui';
-import { parseApiErrors, quantityToInputValue, roundQuantity } from '@resources/helpers';
+import { applySelectPlusRecord, Button, Input, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
+import { normalizeListResponse, parseApiErrors, quantityToInputValue, roundQuantity } from '@resources/helpers';
+import { FormModal as MaterialFormModal } from '@pages/Materials/FormModal';
 import { materialService, pieceMaterialService } from '@resources/services';
 
 export function PieceMaterialFormModal({
@@ -10,11 +12,14 @@ export function PieceMaterialFormModal({
     onClose,
     ...params
 }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const isEdit = Boolean(assignment?.id);
     const [loading, setLoading] = useState(false);
     const [materialOptions, setMaterialOptions] = useState([]);
     const [values, setValues] = useState({
-        material_id: assignment?.material_id ?? '',
+        material_id:
+            assignment?.material_id != null ? String(assignment.material_id) : '',
         quantity: quantityToInputValue(assignment?.quantity),
     });
     const [errors, setErrors] = useState({});
@@ -23,11 +28,11 @@ export function PieceMaterialFormModal({
         materialService
             .getAll({ paginated: false, limit: 500 })
             .then((response) => {
-                const list = Array.isArray(response) ? response : response?.data ?? [];
+                const list = normalizeListResponse(response);
 
                 setMaterialOptions(
                     list.map((row) => ({
-                        value: row.id,
+                        value: String(row.id),
                         label: `${row.name} (${row.uom})`,
                     })),
                 );
@@ -39,6 +44,26 @@ export function PieceMaterialFormModal({
         const { name, value } = event.target;
         setValues((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleMaterialCreated(record) {
+        applySelectPlusRecord({
+            onOptionsChange: setMaterialOptions,
+            record,
+            mapToOption: (material) => ({
+                value: String(material.id),
+                label: `${material.name} (${material.uom})`,
+            }),
+            onChange: handleChange,
+            name: 'material_id',
+        });
+        setErrors((current) => ({ ...current, material_id: null }));
+    }
+
+    function openMaterialModal() {
+        showModal(<MaterialFormModal />, {
+            onSave: handleMaterialCreated,
+        });
     }
 
     function validate() {
@@ -94,7 +119,7 @@ export function PieceMaterialFormModal({
             onClose={onClose}
         >
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                <Select
+                <SelectPlus
                     label="Material"
                     name="material_id"
                     value={values.material_id}
@@ -102,6 +127,9 @@ export function PieceMaterialFormModal({
                     options={materialOptions}
                     required
                     error={errors.material_id}
+                    showAdd={userCan('materials.add')}
+                    addLabel="Nuevo material"
+                    onAddClick={openMaterialModal}
                 />
                 <Input
                     label="Cantidad"

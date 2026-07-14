@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, SaveButton, Select } from '@features/ui';
+import { applySelectPlusRecord, Button, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import { normalizeListResponse, parseApiErrors } from '@resources/helpers';
+import { FormModal as MaterialFormModal } from '@pages/Materials/FormModal';
+import { FormModal as SupplierFormModal } from '@pages/Suppliers/FormModal';
 import { materialService, materialSupplierService, supplierService } from '@resources/services';
 
 export function MaterialSupplierFormModal({
@@ -11,6 +14,8 @@ export function MaterialSupplierFormModal({
     onClose,
     ...params
 }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const isEdit = Boolean(assignment?.id);
     const [loading, setLoading] = useState(false);
     const [options, setOptions] = useState([]);
@@ -48,6 +53,48 @@ export function MaterialSupplierFormModal({
         const { name, value } = event.target;
         setValues((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleMaterialCreated(record) {
+        applySelectPlusRecord({
+            onOptionsChange: setOptions,
+            record,
+            mapToOption: (material) => ({
+                value: String(material.id),
+                label: material.name,
+            }),
+            onChange: handleChange,
+            name: 'material_id',
+        });
+        setErrors((current) => ({ ...current, material_id: null }));
+    }
+
+    function handleSupplierCreated(record) {
+        const supplier = record?.data ?? record;
+
+        applySelectPlusRecord({
+            onOptionsChange: setOptions,
+            record: supplier,
+            mapToOption: (row) => ({
+                value: String(row.id),
+                label: row.entity?.name ?? `Proveedor #${row.id}`,
+            }),
+            onChange: handleChange,
+            name: 'supplier_id',
+        });
+        setErrors((current) => ({ ...current, supplier_id: null }));
+    }
+
+    function openMaterialModal() {
+        showModal(<MaterialFormModal />, {
+            onSave: handleMaterialCreated,
+        });
+    }
+
+    function openSupplierModal() {
+        showModal(<SupplierFormModal />, {
+            onSave: handleSupplierCreated,
+        });
     }
 
     function validate() {
@@ -103,7 +150,7 @@ export function MaterialSupplierFormModal({
         <Modal {...params} title={title} onClose={onClose}>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 {fromSupplier && (
-                    <Select
+                    <SelectPlus
                         label="Material"
                         name="material_id"
                         value={values.material_id}
@@ -112,10 +159,13 @@ export function MaterialSupplierFormModal({
                         required
                         disabled={isEdit}
                         error={errors.material_id}
+                        showAdd={!isEdit && userCan('materials.add')}
+                        addLabel="Nuevo material"
+                        onAddClick={openMaterialModal}
                     />
                 )}
                 {fromMaterial && (
-                    <Select
+                    <SelectPlus
                         label="Proveedor"
                         name="supplier_id"
                         value={values.supplier_id}
@@ -124,6 +174,9 @@ export function MaterialSupplierFormModal({
                         required
                         disabled={isEdit}
                         error={errors.supplier_id}
+                        showAdd={!isEdit && userCan('suppliers.add')}
+                        addLabel="Nuevo proveedor"
+                        onAddClick={openSupplierModal}
                     />
                 )}
                 <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">

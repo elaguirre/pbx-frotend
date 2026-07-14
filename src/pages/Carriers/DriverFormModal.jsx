@@ -36,14 +36,14 @@ export function DriverFormModal({ carrierId, onSave, onClose, ...params }) {
 
     function handleEntityCreated(record) {
         applySelectPlusRecord({
-            options: entities,
             onOptionsChange: setEntities,
             record,
             mapToOption: (entity) => ({
                 value: String(entity.id),
                 label: entity.name,
             }),
-            onSelect: setEntityId,
+            onChange: handleChange,
+            name: 'entity_id',
         });
         setErrors({});
     }

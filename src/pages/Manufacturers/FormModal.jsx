@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, SaveButton, Select } from '@features/ui';
+import { applySelectPlusRecord, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import { normalizeListResponse, parseApiErrors } from '@resources/helpers';
+import { FormModal as EntityFormModal } from '@pages/Entities/FormModal';
 import { entityService, manufacturerService } from '@resources/services';
 
 const emptyValues = {
@@ -9,9 +11,18 @@ const emptyValues = {
 };
 
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const [loading, setLoading] = useState(false);
     const [entities, setEntities] = useState([]);
-    const [values, setValues] = useState({ ...emptyValues, ...formValues });
+    const [values, setValues] = useState({
+        ...emptyValues,
+        ...formValues,
+        entity_id:
+            formValues.entity_id != null && formValues.entity_id !== ''
+                ? String(formValues.entity_id)
+                : '',
+    });
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -32,6 +43,26 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         const { name, value } = event.target;
         setValues((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleEntityCreated(record) {
+        applySelectPlusRecord({
+            onOptionsChange: setEntities,
+            record,
+            mapToOption: (entity) => ({
+                value: String(entity.id),
+                label: entity.name,
+            }),
+            onChange: handleChange,
+            name: 'entity_id',
+        });
+        setErrors((current) => ({ ...current, entity_id: null }));
+    }
+
+    function openEntityModal() {
+        showModal(<EntityFormModal />, {
+            onSave: handleEntityCreated,
+        });
     }
 
     function validate() {
@@ -75,18 +106,23 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         }
     }
 
+    const isEdit = Boolean(values.id);
+
     return (
-        <Modal {...params} title={values.id ? 'Editar maquilador' : 'Crear maquilador'} onClose={onClose}>
+        <Modal {...params} title={isEdit ? 'Editar maquilador' : 'Crear maquilador'} onClose={onClose}>
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                <Select
+                <SelectPlus
                     label="Entidad"
                     name="entity_id"
                     value={values.entity_id}
                     onChange={handleChange}
                     options={entities}
                     required
-                    disabled={Boolean(values.id)}
+                    disabled={isEdit}
                     error={errors.entity_id}
+                    showAdd={!isEdit && userCan('entities.add')}
+                    addLabel="Nueva entidad"
+                    onAddClick={openEntityModal}
                 />
                 <div className="flex justify-end border-t border-slate-100 pt-4">
                     <SaveButton loading={loading} />

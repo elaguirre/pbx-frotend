@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, SaveButton, Input, Select, Textarea } from '@features/ui';
-import { isPriceModified, parseApiErrors } from '@resources/helpers';
+import { applySelectPlusRecord, Modal, SaveButton, Input, Select, SelectPlus, Textarea } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
+import { isPriceModified, normalizeListResponse, parseApiErrors } from '@resources/helpers';
+import { FormModal as ProductFormModal } from '@pages/Products/FormModal';
 import { orderConceptService, orderService, productService } from '@resources/services';
 
 const emptyValues = {
@@ -14,6 +16,8 @@ const emptyValues = {
 };
 
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState([]);
     const [products, setProducts] = useState([]);
@@ -30,23 +34,23 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
             productService.getAll({ paginated: false, limit: 500 }),
         ])
             .then(([ordersResponse, productsResponse]) => {
-                const orderList = Array.isArray(ordersResponse) ? ordersResponse : ordersResponse?.data ?? [];
-                const productList = Array.isArray(productsResponse) ? productsResponse : productsResponse?.data ?? [];
+                const orderList = normalizeListResponse(ordersResponse);
+                const productList = normalizeListResponse(productsResponse);
+                const byId = {};
 
                 setOrders(
                     orderList.map((order) => ({
-                        value: order.id,
+                        value: String(order.id),
                         label: `#${order.id} — ${order.client?.entity?.name ?? 'Cliente'}`,
-                    }))
+                    })),
                 );
-                const byId = {};
 
                 setProducts(
                     productList.map((product) => {
                         byId[product.id] = product;
 
                         return {
-                            value: product.id,
+                            value: String(product.id),
                             label: `${product.sku} — ${product.name}`,
                         };
                     }),
@@ -56,6 +60,7 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
             .catch(() => {
                 setOrders([]);
                 setProducts([]);
+                setProductById({});
             });
     }, []);
 
@@ -66,7 +71,7 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
             const next = { ...current, [name]: value };
 
             if (name === 'product_id') {
-                const selected = productById[value];
+                const selected = productById[value] ?? productById[Number(value)];
 
                 next.price = selected?.price != null ? String(selected.price) : '';
                 next.price_modification_reason = '';
@@ -75,6 +80,35 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
             return next;
         });
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleProductCreated(record) {
+        const row = record?.data ?? record;
+
+        setProductById((current) => ({ ...current, [row.id]: row }));
+        applySelectPlusRecord({
+            onOptionsChange: setProducts,
+            record: row,
+            mapToOption: (product) => ({
+                value: String(product.id),
+                label: `${product.sku} — ${product.name}`,
+            }),
+            onChange: handleChange,
+            name: 'product_id',
+        });
+        setValues((current) => ({
+            ...current,
+            product_id: String(row.id),
+            price: row.price != null ? String(row.price) : '',
+            price_modification_reason: '',
+        }));
+        setErrors((current) => ({ ...current, product_id: null }));
+    }
+
+    function openProductModal() {
+        showModal(<ProductFormModal />, {
+            onSave: handleProductCreated,
+        });
     }
 
     function validate() {
@@ -143,7 +177,7 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     required
                     error={errors.order_id}
                 />
-                <Select
+                <SelectPlus
                     label="Producto"
                     name="product_id"
                     value={values.product_id}
@@ -151,6 +185,9 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     options={products}
                     required
                     error={errors.product_id}
+                    showAdd={userCan('products.add')}
+                    addLabel="Nuevo producto"
+                    onAddClick={openProductModal}
                 />
                 <Input
                     label="Cantidad"

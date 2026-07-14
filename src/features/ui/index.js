@@ -26,3 +26,4 @@ export { Badge } from './Badge';
 export { Alert } from './Alert';
 export { ParentRecordFormHeader } from './ParentRecordFormHeader';
 export { DetailField } from './DetailField';
+export { Tooltip } from './Tooltip';

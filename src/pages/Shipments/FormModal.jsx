@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, SaveButton, Select } from '@features/ui';
+import { applySelectPlusRecord, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import { formatQuantity, normalizeListResponse, parseApiErrors } from '@resources/helpers';
+import { CarrierUnitFormModal } from '@pages/Carriers/CarrierUnitFormModal';
+import { DriverFormModal } from '@pages/Carriers/DriverFormModal';
+import { FormModal as CarrierFormModal } from '@pages/Carriers/FormModal';
 import { carrierService, carrierUnitService, driverService, shipmentService } from '@resources/services';
 
 const emptyValues = {
@@ -11,6 +15,8 @@ const emptyValues = {
 };
 
 export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const [loading, setLoading] = useState(false);
     const [carriers, setCarriers] = useState([]);
     const [units, setUnits] = useState([]);
@@ -79,9 +85,7 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
         carrierUnitService
             .getAll({ paginated: false, limit: 500, carrier_id: values.carrier_id })
             .then((response) => {
-                const list = normalizeListResponse(response);
-
-                setUnits(list);
+                setUnits(normalizeListResponse(response));
             })
             .catch(() => setUnits([]));
     }, [values.carrier_id]);
@@ -111,6 +115,88 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
             return next;
         });
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handleCarrierCreated(record) {
+        const carrier = record?.data ?? record;
+
+        applySelectPlusRecord({
+            onOptionsChange: setCarriers,
+            record: carrier,
+            mapToOption: (row) => ({
+                value: String(row.id),
+                label: row.entity?.name ?? `Transportista #${row.id}`,
+            }),
+            onChange: handleChange,
+            name: 'carrier_id',
+        });
+        setErrors((current) => ({ ...current, carrier_id: null }));
+    }
+
+    function handleUnitCreated(record) {
+        const unit = record?.data ?? record;
+
+        if (!unit?.id) {
+            return;
+        }
+
+        setUnits((current) => {
+            if (current.some((row) => String(row.id) === String(unit.id))) {
+                return current;
+            }
+
+            return [...current, unit];
+        });
+        handleChange({
+            target: {
+                name: 'carrier_unit_id',
+                value: String(unit.id),
+                type: 'select-one',
+            },
+        });
+    }
+
+    function handleDriverCreated(record) {
+        const driver = record?.data ?? record;
+
+        applySelectPlusRecord({
+            onOptionsChange: (updater) => {
+                setDrivers((current) => {
+                    const merged = updater(current);
+                    const withoutEmpty = merged.filter((row) => row.value !== '');
+
+                    return [{ value: '', label: 'Sin conductor' }, ...withoutEmpty];
+                });
+            },
+            record: driver,
+            mapToOption: (row) => ({
+                value: String(row.id),
+                label: row.entity?.name ?? `Conductor #${row.id}`,
+            }),
+            onChange: handleChange,
+            name: 'driver_id',
+        });
+        setErrors((current) => ({ ...current, driver_id: null }));
+    }
+
+    function openCarrierModal() {
+        showModal(<CarrierFormModal />, {
+            onSave: handleCarrierCreated,
+        });
+    }
+
+    function openUnitModal() {
+        showModal(<CarrierUnitFormModal />, {
+            carrierId: values.carrier_id,
+            onSave: handleUnitCreated,
+        });
+    }
+
+    function openDriverModal() {
+        showModal(<DriverFormModal />, {
+            carrierId: values.carrier_id,
+            onSave: handleDriverCreated,
+        });
     }
 
     function validate() {
@@ -164,7 +250,7 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
             onClose={onClose}
         >
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                <Select
+                <SelectPlus
                     label="Transportista"
                     name="carrier_id"
                     value={values.carrier_id}
@@ -172,8 +258,11 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     options={carriers}
                     required
                     error={errors.carrier_id}
+                    showAdd={userCan('carriers.add')}
+                    addLabel="Nuevo transportista"
+                    onAddClick={openCarrierModal}
                 />
-                <Select
+                <SelectPlus
                     label="Unidad de transporte"
                     name="carrier_unit_id"
                     value={values.carrier_unit_id}
@@ -182,6 +271,9 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     required
                     disabled={!values.carrier_id}
                     error={errors.carrier_unit_id}
+                    showAdd={Boolean(values.carrier_id) && userCan('carrier_units.add')}
+                    addLabel="Nueva unidad"
+                    onAddClick={openUnitModal}
                 />
                 {selectedUnit && (
                     <p className="text-sm text-slate-600">
@@ -192,7 +284,7 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                         </span>
                     </p>
                 )}
-                <Select
+                <SelectPlus
                     label="Conductor"
                     name="driver_id"
                     value={values.driver_id}
@@ -200,6 +292,9 @@ export function FormModal({ onSave, formValues = {}, onClose, ...params }) {
                     options={drivers}
                     disabled={!values.carrier_id}
                     error={errors.driver_id}
+                    showAdd={Boolean(values.carrier_id) && userCan('drivers.add')}
+                    addLabel="Nuevo conductor"
+                    onAddClick={openDriverModal}
                 />
                 <div className="flex justify-end border-t border-slate-100 pt-4">
                     <SaveButton loading={loading} />

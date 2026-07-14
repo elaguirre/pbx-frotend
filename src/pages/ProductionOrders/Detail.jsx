@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
-import { AppModule, Badge, Button, DetailField, Table, tableActionsColumn } from '@features/ui';
+import { IconInfoCircle, IconPencil, IconTrash } from '@tabler/icons-react';
+import { AppModule, Badge, Button, DetailField, Icon, Table, Tooltip, tableActionsColumn } from '@features/ui';
 import { useAuth, useConfirm, useGlobalModals } from '@resources/contexts';
 import { getManufacturerOrderPieceStatusBadgeProps } from '@resources/constants/manufacturerOrderPieceStatus';
 import { formatCatalogCost, formatDate, formatQuantity, getOrderConcept, getOrderPiece } from '@resources/helpers';
@@ -100,23 +100,40 @@ export function ProductionOrderDetail() {
     const pieceColumns = [
         { title: 'ID', column: 'id', isSortable: true },
         {
-            title: 'Pedido',
-            column: (row) => {
-                const orderPiece = getOrderPiece(row);
-
-                return orderPiece?.order_id ?? orderPiece?.order?.id ?? '—';
-            },
-        },
-        {
-            title: 'Producto',
-            column: (row) => getOrderConcept(getOrderPiece(row))?.product?.name ?? '—',
-        },
-        {
             title: 'Pieza',
             column: (row) => {
                 const orderPiece = getOrderPiece(row);
+                const pieceName = orderPiece?.piece?.name ?? `Pieza #${orderPiece?.piece_id ?? '—'}`;
+                const orderId = orderPiece?.order_id ?? orderPiece?.order?.id;
+                const productName = getOrderConcept(orderPiece)?.product?.name;
 
-                return orderPiece?.piece?.name ?? `Pieza #${orderPiece?.piece_id ?? '—'}`;
+                return (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span>{pieceName}</span>
+                        <Tooltip
+                            content={
+                                <dl className="grid gap-2 text-xs">
+                                    <div>
+                                        <dt className="font-medium text-slate-500">Pedido</dt>
+                                        <dd className="text-slate-900">{orderId ?? '—'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="font-medium text-slate-500">Producto</dt>
+                                        <dd className="text-slate-900">{productName ?? '—'}</dd>
+                                    </div>
+                                </dl>
+                            }
+                        >
+                            <button
+                                type="button"
+                                className="inline-flex rounded text-slate-400 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
+                                aria-label="Ver pedido y producto"
+                            >
+                                <Icon icon={IconInfoCircle} size="sm" />
+                            </button>
+                        </Tooltip>
+                    </span>
+                );
             },
         },
         { title: 'Asignadas', column: 'quantity', isSortable: true },

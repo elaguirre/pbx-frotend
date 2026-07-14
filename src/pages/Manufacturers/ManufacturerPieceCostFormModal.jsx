@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, SaveButton, Select } from '@features/ui';
+import { applySelectPlusRecord, Button, Input, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import { normalizeListResponse, parseApiErrors } from '@resources/helpers';
+import { FormModal as PieceFormModal } from '@pages/Pieces/FormModal';
 import { manufacturerPieceCostService, pieceService } from '@resources/services';
 
 export function ManufacturerPieceCostFormModal({
@@ -10,6 +12,8 @@ export function ManufacturerPieceCostFormModal({
     onClose,
     ...params
 }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const isEdit = Boolean(costRecord?.id);
     const [loading, setLoading] = useState(false);
     const [pieceOptions, setPieceOptions] = useState([]);
@@ -39,6 +43,26 @@ export function ManufacturerPieceCostFormModal({
         const { name, value } = event.target;
         setValues((current) => ({ ...current, [name]: value }));
         setErrors((current) => ({ ...current, [name]: null }));
+    }
+
+    function handlePieceCreated(record) {
+        applySelectPlusRecord({
+            onOptionsChange: setPieceOptions,
+            record,
+            mapToOption: (piece) => ({
+                value: String(piece.id),
+                label: piece.name,
+            }),
+            onChange: handleChange,
+            name: 'piece_id',
+        });
+        setErrors((current) => ({ ...current, piece_id: null }));
+    }
+
+    function openPieceModal() {
+        showModal(<PieceFormModal />, {
+            onSave: handlePieceCreated,
+        });
     }
 
     function validate() {
@@ -92,7 +116,7 @@ export function ManufacturerPieceCostFormModal({
             onClose={onClose}
         >
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-                <Select
+                <SelectPlus
                     label="Pieza"
                     name="piece_id"
                     value={values.piece_id}
@@ -101,6 +125,9 @@ export function ManufacturerPieceCostFormModal({
                     required
                     disabled={isEdit}
                     error={errors.piece_id}
+                    showAdd={!isEdit && userCan('pieces.add')}
+                    addLabel="Nueva pieza"
+                    onAddClick={openPieceModal}
                 />
                 <Input
                     label="Precio (mano de obra)"

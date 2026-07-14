@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { Alert, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { applySelectPlusRecord, Alert, Modal, SaveButton, SelectPlus } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import { normalizeListResponse, parseApiErrors } from '@resources/helpers';
 import { useAppStore } from '@resources/store';
+import { FormModal as ClientFormModal } from '@pages/Clients/FormModal';
 import { clientService } from '@resources/services';
 
 export function StartOrderModal({ onSave, onClose, ...params }) {
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const startOrder = useAppStore((state) => state.startOrder);
     const fetchCurrentOrder = useAppStore((state) => state.fetchCurrentOrder);
     const [loading, setLoading] = useState(false);
@@ -32,6 +36,28 @@ export function StartOrderModal({ onSave, onClose, ...params }) {
     function handleClientChange(event) {
         setClientId(event.target.value);
         setErrors((current) => ({ ...current, client_id: null }));
+    }
+
+    function handleClientCreated(record) {
+        const client = record?.data ?? record;
+
+        applySelectPlusRecord({
+            onOptionsChange: setClients,
+            record: client,
+            mapToOption: (row) => ({
+                value: String(row.id),
+                label: row.entity?.name ?? `Cliente #${row.id}`,
+            }),
+            onChange: handleClientChange,
+            name: 'client_id',
+        });
+        setErrors((current) => ({ ...current, client_id: null }));
+    }
+
+    function openClientModal() {
+        showModal(<ClientFormModal />, {
+            onSave: handleClientCreated,
+        });
     }
 
     async function handleSubmit(event) {
@@ -72,6 +98,9 @@ export function StartOrderModal({ onSave, onClose, ...params }) {
                     options={clients}
                     required
                     error={errors.client_id}
+                    showAdd={userCan('clients.add')}
+                    addLabel="Nuevo cliente"
+                    onAddClick={openClientModal}
                 />
                 <Alert style="info" icon={IconInfoCircle}>
                     Al continuar se iniciará un nuevo pedido y reemplazará al pedido activo actual,

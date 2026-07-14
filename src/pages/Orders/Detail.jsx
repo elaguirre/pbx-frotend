@@ -136,20 +136,6 @@ export function OrderDetail() {
             title: 'Pieza',
             column: (row) => row.piece?.name ?? `Pieza #${row.piece_id ?? '—'}`,
         },
-        {
-            title: 'Asignado (total)',
-            column: (row) => {
-                const assigned = Number(row.assigned_quantity ?? 0);
-                const total = Number(row.quantity ?? 0);
-                const label = `${formatQuantity(assigned)} / ${formatQuantity(total)}`;
-
-                if (assigned < total) {
-                    return <span className="font-medium text-danger-700">{label}</span>;
-                }
-
-                return label;
-            },
-        },
         tableActionsColumn({
             actions: [
                 {

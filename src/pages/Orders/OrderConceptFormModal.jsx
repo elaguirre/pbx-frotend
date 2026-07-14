@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, Modal, SaveButton, Select, Textarea } from '@features/ui';
+import { applySelectPlusRecord, Button, Input, Modal, SaveButton, SelectPlus, Textarea } from '@features/ui';
+import { useAuth, useGlobalModals } from '@resources/contexts';
 import {
     formatMoney,
     getMainImage,
     isPriceModified,
+    normalizeListResponse,
     parseApiErrors,
     quantityToInputValue,
     roundQuantity,
 } from '@resources/helpers';
+import { FormModal as ProductFormModal } from '@pages/Products/FormModal';
 import { orderConceptService, productService } from '@resources/services';
 
 function buildInitialValues({ product, concept }) {
@@ -38,8 +41,11 @@ export function OrderConceptFormModal({
 }) {
     const isEdit = Boolean(concept?.id);
     const hasFixedProduct = Boolean(product);
+    const { userCan } = useAuth();
+    const { showModal } = useGlobalModals();
     const [loading, setLoading] = useState(false);
     const [productOptions, setProductOptions] = useState([]);
+    const [productById, setProductById] = useState({});
     const [values, setValues] = useState(() => buildInitialValues({ product, concept }));
     const [errors, setErrors] = useState({});
 
@@ -55,17 +61,26 @@ export function OrderConceptFormModal({
         productService
             .getAll({ paginated: false, limit: 500 })
             .then((response) => {
-                const list = Array.isArray(response) ? response : response?.data ?? [];
+                const list = normalizeListResponse(response);
+                const byId = {};
 
                 setProductOptions(
-                    list.map((row) => ({
-                        value: row.id,
-                        label: `${row.sku} — ${row.name} (${formatMoney(row.price)})`,
-                        row,
-                    })),
+                    list.map((row) => {
+                        byId[row.id] = row;
+
+                        return {
+                            value: String(row.id),
+                            label: `${row.sku} — ${row.name} (${formatMoney(row.price)})`,
+                            row,
+                        };
+                    }),
                 );
+                setProductById(byId);
             })
-            .catch(() => setProductOptions([]));
+            .catch(() => {
+                setProductOptions([]);
+                setProductById({});
+            });
     }, [hasFixedProduct, isEdit]);
 
     function handleChange(event) {
@@ -76,16 +91,47 @@ export function OrderConceptFormModal({
 
     function handleProductChange(event) {
         const productId = event.target.value;
-        const selected = productOptions.find((option) => String(option.value) === productId);
+        const selected = productById[productId] ?? productById[Number(productId)];
 
         setValues((current) => ({
             ...current,
             product_id: productId,
-            _product: selected?.row ?? null,
-            price: selected?.row?.price != null ? String(selected.row.price) : '',
+            _product: selected ?? null,
+            price: selected?.price != null ? String(selected.price) : '',
             price_modification_reason: '',
         }));
         setErrors((current) => ({ ...current, product_id: null }));
+    }
+
+    function handleProductCreated(record) {
+        const row = record?.data ?? record;
+
+        setProductById((current) => ({ ...current, [row.id]: row }));
+        applySelectPlusRecord({
+            onOptionsChange: setProductOptions,
+            record: row,
+            mapToOption: (product) => ({
+                value: String(product.id),
+                label: `${product.sku} — ${product.name} (${formatMoney(product.price)})`,
+                row: product,
+            }),
+            onChange: handleProductChange,
+            name: 'product_id',
+        });
+        setValues((current) => ({
+            ...current,
+            product_id: String(row.id),
+            _product: row,
+            price: row.price != null ? String(row.price) : '',
+            price_modification_reason: '',
+        }));
+        setErrors((current) => ({ ...current, product_id: null }));
+    }
+
+    function openProductModal() {
+        showModal(<ProductFormModal />, {
+            onSave: handleProductCreated,
+        });
     }
 
     function validate() {
@@ -178,7 +224,7 @@ export function OrderConceptFormModal({
                 )}
 
                 {!hasFixedProduct && !isEdit && (
-                    <Select
+                    <SelectPlus
                         label="Producto"
                         name="product_id"
                         value={values.product_id}
@@ -186,6 +232,9 @@ export function OrderConceptFormModal({
                         options={productOptions}
                         required
                         error={errors.product_id}
+                        showAdd={userCan('products.add')}
+                        addLabel="Nuevo producto"
+                        onAddClick={openProductModal}
                     />
                 )}
 

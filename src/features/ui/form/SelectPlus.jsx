@@ -1,27 +1,44 @@
 import { IconPlus } from '@tabler/icons-react';
 import { Button } from '../Button';
 import { InputWrapper } from './InputWrapper';
+import { SELECT_CONTROL_HEIGHT_PX } from './selectClassNames';
+import { SearchableSelectControl } from './SearchableSelectControl';
 
-/**
- * Añade una opción al listado si aún no existe (por `value`).
- */
 export function mergeSelectPlusOption(options, option) {
-    if (options.some((row) => row.value === option.value)) {
+    const optionValue = String(option.value);
+
+    if (options.some((row) => String(row.value) === optionValue)) {
         return options;
     }
 
-    return [...options, option];
+    return [...options, { ...option, value: optionValue }];
+}
+
+function createSelectPlusChangeEvent(name, value) {
+    return {
+        target: {
+            name,
+            value,
+            type: 'select-one',
+        },
+        currentTarget: {
+            name,
+            value,
+        },
+    };
 }
 
 /**
  * Tras crear un registro: actualiza opciones del SelectPlus y lo deja seleccionado.
  */
 export function applySelectPlusRecord({
-    options,
+    options = [],
     onOptionsChange,
     record,
     mapToOption,
     onSelect,
+    onChange,
+    name,
 }) {
     const row = record?.data ?? record;
 
@@ -30,10 +47,15 @@ export function applySelectPlusRecord({
     }
 
     const option = mapToOption(row);
-    const nextOptions = mergeSelectPlusOption(options, option);
+    const nextValue = String(option.value);
 
-    onOptionsChange(nextOptions);
-    onSelect?.(option.value);
+    onOptionsChange?.((current) => mergeSelectPlusOption(current ?? options, option));
+
+    if (onChange && name) {
+        onChange(createSelectPlusChangeEvent(name, nextValue));
+    } else {
+        onSelect?.(nextValue);
+    }
 
     return option;
 }
@@ -48,28 +70,27 @@ export function SelectPlus({
     required = false,
     disabled = false,
     error = null,
+    isMulti = false,
     showAdd = true,
     addLabel = 'Agregar',
     onAddClick,
 }) {
     return (
-        <InputWrapper label={label} error={error} required={required}>
+        <InputWrapper label={label} error={error}>
             <div className="flex gap-2">
-                <select
+                <SearchableSelectControl
+                    inputId={name}
                     name={name}
-                    value={value ?? ''}
+                    value={value}
                     onChange={onChange}
+                    options={options}
+                    placeholder={placeholder}
                     required={required}
                     disabled={disabled}
-                    className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-primary-500 focus:border-primary-500 focus:ring-2 disabled:bg-slate-100"
-                >
-                    <option value="">{placeholder}</option>
-                    {options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
+                    error={error}
+                    isMulti={isMulti}
+                    className="min-w-0 flex-1"
+                />
                 {showAdd && onAddClick && (
                     <Button
                         type="button"
@@ -80,6 +101,7 @@ export function SelectPlus({
                         title={addLabel}
                         aria-label={addLabel}
                         className="shrink-0 px-3"
+                        style={{ height: `${SELECT_CONTROL_HEIGHT_PX}px` }}
                     />
                 )}
             </div>
